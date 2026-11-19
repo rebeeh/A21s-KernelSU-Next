@@ -27,7 +27,7 @@ A production-grade custom Linux kernel for the **Samsung Galaxy A21s (SM-A217F /
 | **Model** | SM-A217F (also compatible with SM-A217M/N) |
 | **Chipset** | Samsung Exynos 850 (universal850) |
 | **Architecture** | ARM64 (`aarch64-linux-gnu`) |
-| **ROM Base** | LineageOS 24 (Android 15) & AOSP Custom ROMs (Not for Stock OneUI) |
+| **ROM Base** | LineageOS 24 (Android 17 / SDK 37) & AOSP Custom ROMs (Not for Stock OneUI) |
 | **Kernel Version** | Linux `4.19.325-gb8c71b7aecec` |
 | **Compiler** | Google AOSP Clang 12.0.5 (`clang-r416183b`) + `LLVM=1` |
 | **Root Solution** | KernelSU-Next (`v3.4.0-legacy` / UAPI 5 aligned) |

@@ -7,7 +7,7 @@ This guide provides tested instructions for flashing the KernelSU-Next custom ke
 ## Prerequisites
 
 - Samsung Galaxy A21s with **unlocked bootloader**.
-- Installed ROM: **LineageOS 24 (Android 15/17 base)**.
+- Installed ROM: **LineageOS 24 (Android 17 / SDK 37)**.
 - USB cable and PC running Linux or Windows.
 - Backup of stock `boot.img`.
 

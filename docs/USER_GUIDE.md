@@ -21,7 +21,7 @@ Download the latest pre-compiled files from the [GitHub Releases](https://github
 
 | ROM Type | AnyKernel3 Zip | `boot-ksu.img` / `boot-ksu.tar` | Notes |
 | :--- | :---: | :---: | :--- |
-| **LineageOS 24 (Android 15)** | ✅ Supported | ✅ Supported | Native target ROM. Prebuilt `boot-ksu.img` uses LineageOS 24 ramdisk. |
+| **LineageOS 24 (Android 17)** | ✅ Supported | ✅ Supported | Native target ROM. Prebuilt `boot-ksu.img` uses LineageOS 24 ramdisk. |
 | **Other AOSP ROMs (crDroid, PixelOS, LineageOS 20/21)** | ✅ Supported | ⚠️ Requires Repack | Flash via **AnyKernel3 Zip** in recovery (it preserves your ROM's ramdisk). Do NOT flash prebuilt `boot-ksu.img` directly. |
 | **Stock Samsung OneUI (OneUI 2, 3, 4)** | ❌ Not Compatible | ❌ Not Compatible | Incompatible kernel ABI. Stock OneUI requires Samsung proprietary DEFEX, Knox, and 32-bit Binder IPC drivers. |
 

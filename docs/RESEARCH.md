@@ -132,7 +132,7 @@ This enables module mount hiding without kernel crashes.
 - **Branch:** `lineage-24.0` (Linux 4.19.325, HEAD commit `b8c71b7aecec`)
 
 ### Role in Development:
-This is the verified kernel source tree maintaining the `lineage-24.0` branch for Exynos 850 devices (Galaxy A21s). It integrates the official Samsung vendor BSP (`universal850`) updated for modern Android 15 LineageOS userland, Binder IPC, and device drivers.
+This is the verified kernel source tree maintaining the `lineage-24.0` branch for Exynos 850 devices (Galaxy A21s). It integrates the official Samsung vendor BSP (`universal850`) updated for modern Android 17 (SDK 37) LineageOS userland, Binder IPC, and device drivers.
 
 All KernelSU-Next patches in `patches/` apply cleanly onto commit `b8c71b7aecec` of this tree.
 
