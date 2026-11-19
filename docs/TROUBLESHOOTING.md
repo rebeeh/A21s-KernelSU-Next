@@ -32,7 +32,22 @@ When installed to `/data/adb/service.d/00_ksu_crash_reporter.sh`:
 1. Whenever your phone boots, it checks if a kernel panic occurred on the prior boot (`/sys/fs/pstore/dmesg-ramoops-0`).
 2. If a crash is detected, it automatically copies the full crash dump to your user storage:
    `/sdcard/Download/ksu_crash_<timestamp>.log`
-3. It pops up your default browser with a **pre-filled GitHub Issue draft** with the panic trace and tells you where the saved log is located!
+3. It uploads an anonymous log paste (no account required) and triggers a **persistent Android system notification** (`Kernel Crash Detected`) with the web link.
+4. It pops up your default browser with a **pre-filled GitHub Issue draft** with the panic trace and link!
+
+---
+
+### 💡 What If You Don't Have a GitHub Account or Are Not Logged In?
+
+If a user doesn't have a GitHub account or isn't logged in on their phone/PC browser:
+
+1. **What GitHub Does:**
+   * GitHub displays its standard login screen: `https://github.com/login?return_to=...`.
+   * The `return_to` parameter preserves the entire draft! Once you sign in (or sign up), GitHub automatically forwards you to the issue creation page with all fields populated.
+2. **Zero-Account Alternative (No Login Required):**
+   * Both `build.py report-issue` and `00_ksu_crash_reporter.sh` automatically generate an **anonymous online log link** via `https://paste.rs` (e.g. `https://paste.rs/xyz123`).
+   * The raw file is also always preserved locally on the phone (`/sdcard/Download/ksu_crash_<timestamp>.log`) and on PC (`out/logs/`).
+   * Users without GitHub can simply copy the link or file and drop it into community support channels (Telegram group, XDA Developers thread, or Discord)!
 
 ---
 

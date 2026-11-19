@@ -272,8 +272,24 @@ def cmd_report_issue():
         report_lines.append("=" * 40 + " KSUD DEBUG INFO " + "=" * 40)
         report_lines.append(ksu_info.strip() + "\n")
 
-    report_file.write_text("\n".join(report_lines))
+    report_text = "\n".join(report_lines)
+    report_file.write_text(report_text)
     log(f"[✓] Diagnostic report created at: {report_file}")
+
+    # Generate an anonymous shareable paste link (no GitHub account required!)
+    log("Uploading anonymous log paste (no account required)...")
+    paste_url = None
+    try:
+        req = urllib.request.Request(
+            "https://paste.rs",
+            data=report_text.encode("utf-8"),
+            headers={"User-Agent": "A21s-KSU-Reporter"}
+        )
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            paste_url = resp.read().decode("utf-8").strip()
+        log(f"[✓] Shareable Anonymous Link: {paste_url}")
+    except Exception as e:
+        log(f"[!] Could not upload to anonymous pastebin ({e}). Local file preserved.")
 
     # GitHub issue prefill
     snippet = ""
@@ -282,11 +298,13 @@ def cmd_report_issue():
     elif dmesg.strip():
         snippet = dmesg.strip()[-1200:]
 
+    paste_ref = f"\n- **Online Log Link:** {paste_url}" if paste_url else ""
+
     issue_title = f"[Issue Report] Device {device_state} on SM-A217F"
     issue_body = f"""### Device Information
 - **Device Model:** Samsung Galaxy A21s (`SM-A217F`)
 - **Connection Mode:** `{device_state}`
-- **ROM:** LineageOS 24.0 (Android 17)
+- **ROM:** LineageOS 24.0 (Android 17){paste_ref}
 
 ### Problem Description
 <!-- Describe your problem: bootloop, root not recognized, app crash, etc. -->
@@ -306,6 +324,19 @@ def cmd_report_issue():
     issue_url = f"https://github.com/rebeeh/A21s-KernelSU-Next/issues/new?{query}"
     log("[+] Opening pre-filled GitHub issue in your browser...")
     webbrowser.open(issue_url)
+
+    print("\n" + "=" * 65)
+    print(" 📋 DIAGNOSTIC REPORT SUMMARY")
+    print(f" Local File:  {report_file}")
+    if paste_url:
+        print(f" Web Link:    {paste_url}  (No GitHub account required)")
+    print(f" GitHub Link: {issue_url}")
+    print("-" * 65)
+    print(" 💡 NO GITHUB ACCOUNT? NO PROBLEM:")
+    print(" If you don't have a GitHub account or are not logged in:")
+    print(" 1. Copy the Web Link above (or the local .log file).")
+    print(" 2. Share it directly in the Telegram group, XDA thread, or Discord!")
+    print("=" * 65 + "\n")
 
 
 def main():
