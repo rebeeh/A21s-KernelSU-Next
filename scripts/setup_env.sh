@@ -21,8 +21,7 @@ mkdir -p "${WORK_DIR}/toolchain" "${TOOLS_DIR}" "${PROJECT_ROOT}/out"
 # 2. Toolchain Setup (LineageOS / Android Clang r416183b)
 if [ ! -d "${TOOLCHAIN_DIR}/bin" ]; then
     echo "[+] Cloning prebuilt Clang r416183b toolchain..."
-    git clone --depth=1 https://gitlab.com/rebeeh/clang-r416183b.git "${TOOLCHAIN_DIR}" || \
-    git clone --depth=1 https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/clang-r416183b "${TOOLCHAIN_DIR}"
+    git clone --depth=1 https://github.com/LineageOS/android_prebuilts_clang_kernel_linux-x86_clang-r416183b.git "${TOOLCHAIN_DIR}"
 else
     echo "[✓] Toolchain clang-r416183b found."
 fi

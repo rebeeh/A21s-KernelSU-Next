@@ -14,6 +14,8 @@ KERNEL_IMAGE="${KERNEL_IMAGE:-}"
 if [ -z "${KERNEL_IMAGE}" ]; then
     if [ -f "${WORK_DIR}/a21s-kernel/arch/arm64/boot/Image" ]; then
         KERNEL_IMAGE="${WORK_DIR}/a21s-kernel/arch/arm64/boot/Image"
+    elif [ -f "${PROJECT_ROOT}/a21s-kernel/arch/arm64/boot/Image" ]; then
+        KERNEL_IMAGE="${PROJECT_ROOT}/a21s-kernel/arch/arm64/boot/Image"
     elif [ -f "${OUT_DIR}/Image" ]; then
         KERNEL_IMAGE="${OUT_DIR}/Image"
     elif [ -f "Image" ]; then

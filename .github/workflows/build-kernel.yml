@@ -18,14 +18,13 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y bc bison build-essential ccache curl flex g++-multilib \
-            gcc-multilib git gnupg gperf libelf-dev libssl-dev lz4 libncurses5-dev \
-            pkg-config python3 rsync unzip zip zlib1g-dev
+            gcc-multilib gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu git gnupg gperf \
+            libelf-dev libssl-dev lz4 libncurses5-dev pkg-config python3 rsync unzip zip zlib1g-dev
 
       - name: Clone Clang Toolchain (clang-r416183b)
         run: |
           mkdir -p toolchain
-          git clone --depth=1 https://gitlab.com/rebeeh/clang-r416183b.git toolchain/clang-r416183b || \
-          git clone --depth=1 https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/clang-r416183b toolchain/clang-r416183b
+          git clone --depth=1 https://github.com/LineageOS/android_prebuilts_clang_kernel_linux-x86_clang-r416183b.git toolchain/clang-r416183b
 
       - name: Clone Kernel Source & KernelSU-Next
         run: |
@@ -59,7 +58,7 @@ jobs:
       - name: Package AnyKernel3 Zip
         run: |
           mkdir -p out
-          bash scripts/package_anykernel3.sh
+          KERNEL_IMAGE="$(pwd)/a21s-kernel/arch/arm64/boot/Image" bash scripts/package_anykernel3.sh
 
       - name: Upload Kernel Image Artifact
         uses: actions/upload-artifact@v4
