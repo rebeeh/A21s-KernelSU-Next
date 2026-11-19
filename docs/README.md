@@ -1,8 +1,21 @@
-# Documentation Hub - Galaxy A21s KernelSU-Next
+# 🗺️ Documentation Hub — Galaxy A21s KernelSU-Next
 
-Welcome to the documentation suite for the **Galaxy A21s (`SM-A217F` / `universal850`) KernelSU-Next** project.
+**Everything you need to build, flash, root, update, debug, and contribute to the Galaxy A21s (`SM-A217F`) KernelSU-Next project on LineageOS 24 — in one place.**
 
-This directory contains technical architecture documentation, flashing guides for all operating systems, OTA update survival workflows, and debugging manuals.
+---
+
+## ⚡ Jump to What You Need
+
+| I want to… | Go here |
+| :--- | :--- |
+| Get root on my A21s for the first time | [User Installation Guide](USER_GUIDE.md) |
+| Flash the kernel ZIP via recovery | [AnyKernel3 method](FLASHING_GUIDE.md#method-3-using-anykernel3-recovery-zip-recommended) |
+| Flash via Linux terminal (`samloader`) | [samloader method](FLASHING_GUIDE.md#method-1-using-samloader-on-linux-recommended--fastest) |
+| Survive a LineageOS OTA update | [OTA & Updates Survival](OTA_AND_UPDATES.md) |
+| Debug a bootloop or pull kernel logs | [Troubleshooting & Diagnostics](TROUBLESHOOTING.md) |
+| Understand how the kernel/KSU integration works | [Technical Architecture](ARCHITECTURE.md) |
+| Read the full research & implementation analysis | [Research & Implementation Report](RESEARCH.md) |
+| Submit a patch or contribute code | [Contributing Guidelines](CONTRIBUTING.md) |
 
 ---
 
@@ -17,6 +30,46 @@ This directory contains technical architecture documentation, flashing guides fo
 | **[Research & Implementation Report](RESEARCH.md)** | Developers / Researchers | Comprehensive analysis of Exynos 850 kernel trees, dynamic kprobes vs manual hooks, and UAPI 5 parity. |
 | **[Troubleshooting & Bug Reporting](TROUBLESHOOTING.md)** | All Users | Extracting `ramoops`, `dmesg`, `logcat`, and `ksud` logs, bootloop recovery, and issue templates. |
 | **[Contributing Guidelines](CONTRIBUTING.md)** | Contributors | How to contribute code, submit patches, and verify kernel builds. |
+
+---
+
+## 🧭 Reading Flow — Where to Start
+
+Use this visual map to follow the right path based on your goal.
+
+```
+                      ┌─────────────────────────────────────┐
+                      │  New to the project?                │
+                      │  Start → USER_GUIDE.md              │
+                      └────────────┬────────────────────────┘
+                                   │
+              ┌────────────────────▼────────────────────────┐
+              │  Ready to flash?                            │
+              │  FLASHING_GUIDE.md                          │
+              │  (AnyKernel3 ZIP  /  samloader  /  Odin)   │
+              └────────────────────┬────────────────────────┘
+                                   │
+         ┌─────────────────────────▼──────────────────────────┐
+         │  Got root? Want to keep it across OTA updates?     │
+         │  OTA_AND_UPDATES.md                                │
+         └──────────┬────────────────────────┬────────────────┘
+                    │                        │
+     ┌──────────────▼──────────┐  ┌──────────▼──────────────────┐
+     │ Something broke?        │  │ Want to go deeper?           │
+     │ TROUBLESHOOTING.md      │  │ ARCHITECTURE.md              │
+     │ (logs, bootloops,       │  │ RESEARCH.md                  │
+     │  issue templates)       │  │ (Exynos 850, kprobes, hooks) │
+     └─────────────────────────┘  └──────────────────────────────┘
+                                           │
+                               ┌───────────▼───────────────────┐
+                               │ Want to contribute?           │
+                               │ CONTRIBUTING.md               │
+                               └───────────────────────────────┘
+```
+
+> [!TIP]
+> **Junior users** — follow the flow top-to-bottom starting with the User Installation Guide.
+> **Kernel developers** — jump straight to `ARCHITECTURE.md` or `RESEARCH.md` and use the other docs as reference.
 
 ---
 
@@ -45,9 +98,33 @@ This project builds upon and integrates with the following key open-source repos
 
 ---
 
-## ⚡ Quick Links & Navigation
+## 🛠️ Before You Begin
 
-- **Need to root immediately?** Head to the **[User Installation Guide](USER_GUIDE.md)**.
-- **Flashing via Recovery?** Use **`KernelSU-Next-A21s-universal850-AnyKernel3.zip`** ([Guide](FLASHING_GUIDE.md#method-3-using-anykernel3-recovery-zip-recommended)).
-- **Flashing via Linux terminal?** Use `samloader flash --partition BOOT boot-ksu.img` ([Guide](FLASHING_GUIDE.md#method-1-using-samloader-on-linux-recommended--fastest)).
-- **Encountered an issue?** Read **[Troubleshooting & Diagnostics](TROUBLESHOOTING.md)** to pull kernel logs before filing a GitHub Issue.
+> [!IMPORTANT]
+> Review these prerequisites before flashing or building anything.
+
+- **Device:** Samsung Galaxy A21s (`SM-A217F`, codename `a21s`, SoC `universal850` / Exynos 850)
+- **ROM:** LineageOS 24 (Android 14) — this project is built and tested against LineageOS 24 only
+- **Unlocked bootloader** — required to flash a custom kernel
+- **Custom recovery** (e.g. TWRP or LineageOS Recovery) — required for the AnyKernel3 ZIP method
+- **USB debugging enabled** — required for `adb` / `fastboot` / `samloader` workflows
+- **A full backup of your data** — flashing carries risk; always back up first
+
+> [!CAUTION]
+> Flashing the wrong image can result in a soft-brick. Always verify the build matches your exact device model (`SM-A217F`) before proceeding.
+
+---
+
+## 📋 Related Docs (Next Steps)
+
+After reading this hub, the natural next stop is the **[User Installation Guide](USER_GUIDE.md)**. From there, follow the reading flow above based on what you need.
+
+| If you just finished… | Read next… |
+| :--- | :--- |
+| This README | [User Installation Guide](USER_GUIDE.md) |
+| User Installation Guide | [Flashing Guide](FLASHING_GUIDE.md) |
+| Flashing Guide | [OTA & Updates Survival](OTA_AND_UPDATES.md) |
+| OTA & Updates Survival | [Troubleshooting & Bug Reporting](TROUBLESHOOTING.md) |
+| Troubleshooting | [Technical Architecture](ARCHITECTURE.md) |
+| Technical Architecture | [Research & Implementation Report](RESEARCH.md) |
+| Research Report | [Contributing Guidelines](CONTRIBUTING.md) |
