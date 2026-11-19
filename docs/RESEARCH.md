@@ -228,7 +228,7 @@ if (!copy_from_user(&in_cmd, arg, sizeof(in_cmd)) &&
 }
 ```
 
-If a client provides its own expected target version in `arg`, the kernel dynamically validates and mirrors it within the safe range $[4, 16]$.
+If a client provides its own expected target version in `arg`, the kernel dynamically validates and mirrors it within the safe range [4, 16].
 
 ---
 

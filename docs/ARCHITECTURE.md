@@ -128,7 +128,7 @@ if (requiresNewManager) {
 |---|---|---|
 | **KernelSU-Next Manager v3.4.2** (stable) | **5** | Default stable UAPI for standard managers and embedded `ksud`. |
 | `origin/legacy` git HEAD / Canary | **6** | Preinit/symbol lookups dynamically negotiated when requested. |
-| **This kernel build (v1.1.0+)** | **Dynamic ($4 \le \text{UAPI} \le 16$)** | 3-tier resolution engine supporting live supercall switching (`CMD_CHANGE_UAPIVER = 10013`), caller reflection, and `ksu.uapi=X` bootargs. |
+| **This kernel build (v1.1.0+)** | **Dynamic (4 ≤ UAPI ≤ 16, default: 5)** | 3-tier resolution engine supporting live supercall switching (`CHANGE_UAPIVER = 10013`), caller reflection, and `ksu.uapi=X` bootargs. |
 
 > [!NOTE]
 > The **3-Tier Dynamic UAPI Resolution Engine** guarantees backward and forward compatibility. When a Manager initiates communication, the kernel driver inspects caller buffer sizing and responds with the expected layout automatically, preventing mismatches and eliminating warning banners.

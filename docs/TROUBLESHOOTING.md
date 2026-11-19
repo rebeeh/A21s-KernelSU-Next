@@ -315,7 +315,7 @@ The kernel immediately updates its internal state and responds to all subsequent
 
 **Layer 2 — Caller Auto-Negotiation Reflection:**
 
-When a caller issues `ioctl(fd, KSU_IOCTL_GET_INFO, &info)` with `info.uapi_version` initialized to a supported version ($4 \le \text{UAPI} \le 16$), the kernel driver inspects `in_cmd` via `copy_from_user` and dynamically reflects the requested version back — providing instant forward and backward compatibility with no user action required.
+When a caller issues `ioctl(fd, KSU_IOCTL_GET_INFO, &info)` with `info.uapi_version` initialized to a supported version (4 ≤ UAPI ≤ 16), the kernel driver inspects `in_cmd` via `copy_from_user` and dynamically reflects the requested version back — providing instant forward and backward compatibility with no user action required.
 
 **Layer 3 — Kernel Command-Line Boot Parameter (`ksu.uapi=X`):**
 
