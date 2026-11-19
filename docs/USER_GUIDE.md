@@ -35,13 +35,14 @@ Before flashing anything, make sure you have all of the following in place:
 
 ## 📦 Downloads
 
-Download the latest pre-compiled release files from the [GitHub Releases](https://github.com/rebeeh/A21s-KernelSU-Next/releases) page:
+Download the latest pre-compiled release files from the [GitHub Releases](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest) page ([v1.1.0 Release](https://github.com/rebeeh/A21s-KernelSU-Next/releases/tag/v1.1.0)):
 
 | File | Purpose | Flashing Tool |
 | :--- | :--- | :--- |
-| [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.0.0/KernelSU-Next-A21s-universal850-AnyKernel3.zip) | Flashable ZIP — easiest method, works with any AOSP ROM | Lineage Recovery / [TWRP](https://twrp.me) / [OrangeFox](https://orangefox.download) |
-| [`boot-ksu.tar`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.0.0/boot-ksu.tar) | Odin AP package — for Windows users | [Samsung Odin](https://odindownload.com) |
-| [`boot-ksu.img`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.0.0/boot-ksu.img) | Raw boot partition image — for Linux/Mac users | [`samloader`](https://github.com/topjohnwu/samloader-rs) / [`heimdall`](https://github.com/Benjamin-Dobell/Heimdall) |
+| [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.1.0/KernelSU-Next-A21s-universal850-AnyKernel3.zip) | Flashable ZIP — easiest method, works with any AOSP ROM | Lineage Recovery / [TWRP](https://twrp.me) / [OrangeFox](https://orangefox.download) |
+| [`boot-ksu.tar`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.1.0/boot-ksu.tar) | Odin AP package — for Windows users | [Samsung Odin](https://odindownload.com) |
+| [`boot-ksu.img`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.1.0/boot-ksu.img) | Raw boot partition image — for Linux/Mac users | [`samloader`](https://github.com/topjohnwu/samloader-rs) / [`heimdall`](https://github.com/Benjamin-Dobell/Heimdall) |
+| [`boot.img`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.1.0/boot.img) | Standard boot partition image — for block flashing (`dd`) | Terminal / Root Shell |
 | [`KernelSU_Next_v3.4.2.apk`](https://github.com/KernelSU-Next/KernelSU-Next/releases/download/v3.4.2/KernelSU_Next_v3.4.2.apk) | Official KernelSU-Next root manager app | Android Package Installer / ADB |
 
 > [!TIP]

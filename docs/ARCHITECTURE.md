@@ -22,7 +22,7 @@ This document is a technical deep-dive for kernel developers and advanced Androi
 
 1. **Hardware security blocks dynamic patching.** Samsung's Exynos 850 ships with TZASC and RKP — hardware enforced memory guards running at EL3 — that trigger an instant, unrecoverable kernel panic the moment standard KernelSU tries to insert a kprobe. The fix is to disable kprobes entirely and use compile-time hook call-sites instead.
 
-2. **UAPI versioning must be pinned.** The upstream KernelSU-Next `origin/legacy` branch recently bumped its kernel–userspace API version to 6, which is incompatible with the last stable Manager release (v3.4.2, UAPI 5). We pin the constant at 5 to keep the Manager fully functional.
+2. **UAPI versioning is dynamically resolved.** The upstream KernelSU-Next `origin/legacy` branch bumped its kernel–userspace API version to 6, while official stable Manager releases (such as v3.4.2) use UAPI 5. Rather than hardcoding a static version, we implemented a **3-Tier Dynamic UAPI Resolution Engine** (supercall `10013`, caller buffer reflection, and boot argument `ksu.uapi=X`) to support both managers seamlessly without warnings or crashes.
 
 3. **Backports are needed for a 4.19 non-GKI kernel.** Linux 4.19 is missing `path_umount`, Samsung's tree collides with KernelSU macros, and modern host toolchains (OpenSSL 3.x) break the build scripts — all patched in-tree.
 
@@ -122,16 +122,16 @@ if (requiresNewManager) {
 }
 ```
 
-### Protocol Alignment
+### Protocol Alignment & 3-Tier Dynamic UAPI Resolution
 
-| Component | UAPI Version | Notes |
+| Component | Supported UAPI Versions | Notes |
 |---|---|---|
-| **KernelSU-Next Manager v3.4.2** (latest stable) | **5** | The release to install on the A21s. |
-| `origin/legacy` git HEAD | **6** | Experimental preinit/symbol lookups — **not supported** on non-GKI 4.19. |
-| **This kernel build** | **5** (pinned) | `#define KERNEL_SU_UAPI_VERSION 5` in `uapi/supercall.h`. |
+| **KernelSU-Next Manager v3.4.2** (stable) | **5** | Default stable UAPI for standard managers and embedded `ksud`. |
+| `origin/legacy` git HEAD / Canary | **6** | Preinit/symbol lookups dynamically negotiated when requested. |
+| **This kernel build (v1.1.0+)** | **Dynamic ($4 \le \text{UAPI} \le 16$)** | 3-tier resolution engine supporting live supercall switching (`CMD_CHANGE_UAPIVER = 10013`), caller reflection, and `ksu.uapi=X` bootargs. |
 
-> [!IMPORTANT]
-> Do **not** bump `KERNEL_SU_UAPI_VERSION` to 6. The UAPI 6 feature set depends on GKI symbol exports unavailable in the Samsung 4.19 tree. Pinning at 5 guarantees seamless compatibility with Manager v3.4.2 and its embedded `ksud 3.4.2 (uapi: 5)`.
+> [!NOTE]
+> The **3-Tier Dynamic UAPI Resolution Engine** guarantees backward and forward compatibility. When a Manager initiates communication, the kernel driver inspects caller buffer sizing and responds with the expected layout automatically, preventing mismatches and eliminating warning banners.
 
 ---
 

@@ -26,9 +26,9 @@ Make sure all of the following are true before you start:
 - **ROM:** [LineageOS 24](https://lineageos.org/) (Android 17 / SDK 37) is already installed and booting.
 - **Backup:** You have a copy of your stock `boot.img` stored safely off-device.
 - **Cable:** A working USB cable and a PC running Linux, macOS, or Windows (required for Methods 1, 3, and 4).
-- **Files:** Download the correct release asset for your chosen method from the [releases page](https://github.com/rebeeh/A21s-KernelSU-Next/releases):
-  - Methods 1, 4: `boot-ksu.img` (or `boot-ksu.tar` for Method 3)
-  - Method 2: [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.0.0/KernelSU-Next-A21s-universal850-AnyKernel3.zip)
+- **Files:** Download the correct release asset for your chosen method from the [GitHub Releases](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest) page ([v1.1.0](https://github.com/rebeeh/A21s-KernelSU-Next/releases/tag/v1.1.0)):
+  - Methods 1, 4: [`boot-ksu.img`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.1.0/boot-ksu.img) (or [`boot-ksu.tar`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.1.0/boot-ksu.tar) for Method 3)
+  - Method 2: [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.1.0/KernelSU-Next-A21s-universal850-AnyKernel3.zip)
 
 > [!WARNING]
 > Flashing modifies your device's boot partition. Ensure you have a working backup before proceeding. A failed flash on a device with a locked bootloader may brick the device.
@@ -60,7 +60,7 @@ Make sure all of the following are true before you start:
 This method uses a flashable `.zip` applied directly from your custom recovery — no computer needed.
 
 1. **Copy the zip** to your phone's internal storage or SD card:
-   - File: [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.0.0/KernelSU-Next-A21s-universal850-AnyKernel3.zip)
+   - File: [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.1.0/KernelSU-Next-A21s-universal850-AnyKernel3.zip)
 
 2. **Boot into Recovery.** Compatible recoveries:
    - [TWRP](https://twrp.me)
