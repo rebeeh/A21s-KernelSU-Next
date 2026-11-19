@@ -85,7 +85,8 @@ if [ -n "${STOCK_BOOT}" ] && [ -f "${STOCK_BOOT}" ]; then
     # Step 3: Create Odin-flashable tar
     echo "[+] Step 3: Creating Odin boot-ksu.tar archive..."
     cd "${OUT_DIR}"
-    tar -cvf "${OUT_DIR}/boot-ksu.tar" boot-ksu.img
+    cp -f boot-ksu.img boot.img
+    tar -cvf "${OUT_DIR}/boot-ksu.tar" boot.img
     echo "[✓] Created: ${OUT_DIR}/boot-ksu.tar"
 
     # Step 4: Package AnyKernel3 Zip

@@ -79,7 +79,8 @@ jobs:
           cp ../a21s-kernel/arch/arm64/boot/Image ./kernel
           ../magiskboot repack ../boot.img ../out/boot-ksu.img
           cd ../out
-          tar -cvf boot-ksu.tar boot-ksu.img
+          cp -f boot-ksu.img boot.img
+          tar -cvf boot-ksu.tar boot.img
 
       - name: Upload Kernel Image Artifact
         uses: actions/upload-artifact@v4

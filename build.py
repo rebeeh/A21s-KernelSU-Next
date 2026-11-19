@@ -186,7 +186,7 @@ def cmd_make_tar(boot_img: str = None):
     log(f"Creating Odin tar archive from {source_img} -> {tar_path}")
 
     with tarfile.open(tar_path, "w") as tar:
-        tar.add(source_img, arcname="boot-ksu.img")
+        tar.add(source_img, arcname="boot.img")
 
     size_mb = tar_path.stat().st_size / (1024 * 1024)
     log(f"Successfully created Odin archive: {tar_path.name} ({size_mb:.2f} MiB)")
