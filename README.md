@@ -1,4 +1,4 @@
-# A21s KernelSU Next
+# A21s-KernelSU-Next
 
 [![Build Kernel](https://github.com/rebeeh/A21s-KernelSU-Next/actions/workflows/build-kernel.yml/badge.svg)](https://github.com/rebeeh/A21s-KernelSU-Next/actions/workflows/build-kernel.yml)
 [![License: GPL-2.0](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](LICENSE)
@@ -6,36 +6,168 @@
 [![Kernel: 4.19.325](https://img.shields.io/badge/Kernel-Linux%204.19.325-orange.svg)](https://github.com/LineageOS/android_kernel_samsung_universal850)
 [![Root: KernelSU-Next](https://img.shields.io/badge/Root-KernelSU--Next%20Legacy-teal.svg)](https://github.com/KernelSU-Next/KernelSU-Next)
 
-A production-grade custom Linux kernel for the **Samsung Galaxy A21s (SM-A217F / universal850)** with integrated **KernelSU-Next**, specifically tailored for **LineageOS 24 (Linux 4.19.325)**.
+> A production-grade custom Linux kernel for the **Samsung Galaxy A21s (SM-A217F)** with integrated **KernelSU-Next**, tailored for **LineageOS 24** — solving real Exynos 850 TrustZone/TZASC hardware constraints to deliver stable, full-featured root.
 
 ---
 
-## 🌟 Key Highlights & Engineering Breakthroughs
+## 🗺️ Jump to What You Need
 
-- **TrustZone / TZASC Bypass via Manual Hooks:** Samsung Exynos 850 features hardware memory protection (TZASC / RKP) that traps dynamic runtime kprobes, triggering `irq/160-tzasc` kernel panics and bootloops. We implemented compile-time scope-minimized manual hooks across `fs/exec.c`, `fs/open.c`, `fs/read_write.c`, `fs/stat.c`, and `kernel/reboot.c`, delivering 100% stable execution without memory tampering.
-- **Strict UAPI 5 Parity:** Aligned kernel supercall interfaces to match official KernelSU-Next Manager `v3.4.2` and embedded `ksud (uapi: 5)`, completely eliminating manager warning banners and unlocking full Superuser and Module management tabs.
-- **Linux 4.19 Backports:** Integrated `path_umount` from Linux 5.9+ into `fs/namespace.c` to enable native KernelSU module mount hiding without kernel crashes.
-- **Modern Host Compatibility:** Resolved OpenSSL 3.0+ certificate extraction compilation issues on modern Linux build systems (Fedora 40+, Ubuntu 22.04+).
+| I want to… | Go to… |
+| :--- | :--- |
+| Flash the kernel right now (no compiling) | [End-User Installation Guide](docs/USER_GUIDE.md) |
+| Build from source | [⚡ Build the Kernel](#-build-the-kernel) |
+| Flash to my device | [📲 Flash to Your Device](#-flash-to-your-device) |
+| Understand what makes this kernel special | [🌟 Engineering Highlights](#-engineering-highlights) |
+| Troubleshoot a boot issue | [Troubleshooting Guide](docs/TROUBLESHOOTING.md) |
+| Survive a LineageOS OTA update | [OTA & Updates Guide](docs/OTA_AND_UPDATES.md) |
+| Contribute or port to another device | [Contributing Guidelines](docs/CONTRIBUTING.md) |
+
+---
+
+## 🌟 Engineering Highlights
+
+These are the core technical problems solved to make KernelSU-Next work reliably on the Galaxy A21s:
+
+- **TrustZone / TZASC Bypass via Manual Hooks** — The Samsung Exynos 850 uses hardware memory protection (TZASC / RKP) that traps dynamic runtime kprobes, triggering `irq/160-tzasc` kernel panics and bootloops. Compile-time, scope-minimized manual hooks were implemented across `fs/exec.c`, `fs/open.c`, `fs/read_write.c`, `fs/stat.c`, and `kernel/reboot.c`, delivering 100% stable execution without memory tampering.
+- **Strict UAPI 5 Parity** — Supercall interfaces are aligned with the official KernelSU-Next Manager `v3.4.2` and embedded `ksud (uapi: 5)`, eliminating manager warning banners and unlocking full Superuser and Module management tabs.
+- **Linux 4.19 Backports** — `path_umount` from Linux 5.9+ has been backported into `fs/namespace.c` to enable native KernelSU module mount hiding without kernel crashes.
+- **Modern Host Compatibility** — OpenSSL 3.0+ certificate extraction compilation issues on modern Linux build systems (Fedora 40+, Ubuntu 22.04+) are fully resolved.
 
 ---
 
 ## 📱 Device Specifications
 
 | Specification | Details |
-|---|---|
+| :--- | :--- |
 | **Device** | Samsung Galaxy A21s |
 | **Model** | SM-A217F (also compatible with SM-A217M/N) |
 | **Chipset** | Samsung Exynos 850 (universal850) |
 | **Architecture** | ARM64 (`aarch64-linux-gnu`) |
-| **ROM Base** | LineageOS 24 (Android 17 / SDK 37) & AOSP Custom ROMs (Not for Stock OneUI) |
+| **ROM Base** | LineageOS 24 (Android 17 / SDK 37) & AOSP Custom ROMs *(not for Stock OneUI)* |
 | **Kernel Version** | Linux `4.19.325-gb8c71b7aecec` |
 | **Compiler** | Google AOSP Clang 12.0.5 (`clang-r416183b`) + `LLVM=1` |
 | **Root Solution** | KernelSU-Next (`v3.4.0-legacy` / UAPI 5 aligned) |
 | **Hook Mode** | Manual Hook Mode (`CONFIG_KSU_MANUAL_HOOK=y`) |
 
+> [!IMPORTANT]
+> This kernel is built for **LineageOS 24** and AOSP-based custom ROMs only. It is **not compatible** with Samsung Stock OneUI firmware.
+
 ---
 
-## 📂 Project Architecture
+## 🛠️ Before You Begin
+
+Make sure you have the following before building or flashing:
+
+- A **Samsung Galaxy A21s (SM-A217F / SM-A217M / SM-A217N)** running **LineageOS 24**.
+- A **custom recovery** installed (LineageOS Recovery or TWRP) if flashing via AnyKernel3 zip.
+- **Developer options** and **USB debugging** enabled on your device if using ADB/Odin/Heimdall.
+- A **backed-up stock `boot.img`** in case you need to restore — extract it from your LineageOS 24 build or pull it via `adb shell dd`.
+- For building: a Linux, macOS, or Windows machine (or use the zero-setup cloud build — see below).
+
+---
+
+## ⚡ Build the Kernel
+
+This project is designed to be **100% platform-independent**. Choose whichever method works for you.
+
+### Method A — ☁️ Cloud Build (Zero Local Setup, Recommended for Most Users)
+
+No PC setup needed. Trigger a build directly from your browser:
+
+1. Open [GitHub Actions → Build Kernel](https://github.com/rebeeh/A21s-KernelSU-Next/actions/workflows/build-kernel.yml).
+2. Click **Run workflow**.
+3. Wait for the build to complete, then download the prebuilt `.zip`, `.img`, and `.tar` artifacts.
+
+### Method B — 🐳 Docker / Compose (Windows / macOS / Linux)
+
+Guarantees a byte-for-byte identical build on any OS:
+
+1. Place your stock `boot.img` in the repository root.
+2. Run:
+   ```bash
+   docker compose up --build
+   ```
+3. Artifacts are automatically placed in the `out/` directory.
+
+### Method C — 🐍 Universal Python CLI (Windows / macOS / Linux)
+
+No external dependencies required:
+
+```bash
+# 1. Check your host environment
+python3 build.py doctor
+
+# 2. Package AnyKernel3 recovery zip portably
+python3 build.py package
+
+# 3. Create Odin boot-ksu.tar portably
+python3 build.py make-tar
+
+# 4. One-click build inside a standardised Docker container
+python3 build.py docker-build
+```
+
+### Method D — 🐧 Native Linux / WSL2
+
+```bash
+# 1. Set up toolchains, fetch magiskboot, and apply patches
+./scripts/setup_env.sh
+
+# 2. Build the kernel, repack boot.img, and produce the Odin .tar
+./scripts/build.sh boot.img
+```
+
+---
+
+## 📲 Flash to Your Device
+
+Choose the method that matches your OS and tools:
+
+| Platform | Recommended Tool | Target File |
+| :--- | :--- | :--- |
+| **Any OS / No PC** | [LineageOS Recovery](https://wiki.lineageos.org/adb_fastboot_guide) or [TWRP](https://twrp.me) | `KernelSU-Next-A21s-universal850-AnyKernel3.zip` |
+| **Windows** | [Samsung Odin3 v3.14+](https://odindownload.com) (Slot: AP) | `out/boot-ksu.tar` |
+| **Linux** | [`samloader`](https://github.com/topjohnwu/samloader-rs) | `out/boot-ksu.img` |
+| **macOS / Linux** | [`heimdall`](https://github.com/Benjamin-Dobell/Heimdall) | `out/boot-ksu.img` |
+
+**Quick reference commands:**
+
+```bash
+# samloader (Linux)
+samloader flash --partition BOOT out/boot-ksu.img
+
+# heimdall (macOS / Linux)
+heimdall flash --BOOT out/boot-ksu.img
+```
+
+> [!TIP]
+> The **AnyKernel3 zip** method (via recovery) is the easiest and safest approach for most users — no drivers, no Odin, no cables required beyond the initial recovery install.
+
+> [!CAUTION]
+> Flashing the wrong `boot.img` or `.tar` for your ROM base will likely result in a bootloop. Always verify you are on **LineageOS 24** before flashing.
+
+For detailed, step-by-step instructions for every method, see the [Flashing Guide](docs/FLASHING_GUIDE.md).
+
+---
+
+## 🎯 Verification Milestones
+
+All of the following have been validated on a real SM-A217F device:
+
+- [x] Obtain exact source tree matching LineageOS 24 (`b8c71b7aecec`)
+- [x] Set up AOSP Clang 12.0.5 (`clang-r416183b`) toolchain with `LLVM=1`
+- [x] Identify TrustZone TZASC IRQ 160 crash root cause with dynamic kprobes
+- [x] Implement compile-time Manual Hooks in `fs/` and `kernel/`
+- [x] Backport `path_umount` for safe module unmounting
+- [x] Resolve OpenSSL 3.0+ host build tool collisions
+- [x] Compile kernel and repack boot image using `magiskboot`
+- [x] Boot device into LineageOS 24 without panics
+- [x] Align UAPI to version 5 for full parity with Manager `v3.4.2`
+- [x] Verify live root execution, `ksud`, and Superuser / Module management tabs
+
+---
+
+## 📂 Project Structure
 
 ```
 A21s-KernelSU-Next/
@@ -67,85 +199,22 @@ A21s-KernelSU-Next/
 
 ---
 
-## 🚀 Cross-Platform Build & Flashing System
-
-This project is designed from scratch to be **100% platform-independent**. You can build and flash whether you are on **Windows**, **macOS**, or **Linux**, or even without a PC directly on your device.
-
-### Method A: Universal Python CLI (Windows / macOS / Linux)
-No external dependencies required:
-```bash
-# 1. Check your host environment
-python3 build.py doctor
-
-# 2. Package AnyKernel3 recovery zip portably
-python3 build.py package
-
-# 3. Create Odin boot-ksu.tar portably
-python3 build.py make-tar
-
-# 4. 1-Click build inside standardized Docker container
-python3 build.py docker-build
-```
-
-### Method B: Universal Docker / Compose (Windows / macOS / Linux)
-Guarantees a byte-for-byte identical build on any operating system:
-```bash
-# Place your stock boot.img in the repository root and run:
-docker compose up --build
-```
-Artifacts are automatically placed in the `out/` directory.
-
-### Method C: Cloud Builder (Zero Local Setup)
-Trigger the automated build directly from your browser via **[GitHub Actions](https://github.com/rebeeh/A21s-KernelSU-Next/actions/workflows/build-kernel.yml)** (`Run workflow`). Download the prebuilt zip, img, and tar archives in seconds.
-
-### Method D: Native Linux / WSL2
-```bash
-./scripts/setup_env.sh
-./scripts/build.sh boot.img
-```
-
----
-
-## ⚡ Cross-Platform Flashing Options
-
-| Platform | Recommended Flashing Tool | Target File |
-| :--- | :--- | :--- |
-| **Any OS / No PC** | **[LineageOS Recovery](https://wiki.lineageos.org/adb_fastboot_guide) / [TWRP](https://twrp.me)** | `KernelSU-Next-A21s-universal850-AnyKernel3.zip` |
-| **Windows** | **[Samsung Odin3 v3.14+](https://odindownload.com)** (Slot: AP) | `out/boot-ksu.tar` |
-| **Linux** | **[`samloader`](https://github.com/topjohnwu/samloader-rs)** (`samloader flash --partition BOOT out/boot-ksu.img`) | `out/boot-ksu.img` |
-| **macOS / Linux** | **[`heimdall`](https://github.com/Benjamin-Dobell/Heimdall)** (`heimdall flash --BOOT out/boot-ksu.img`) | `out/boot-ksu.img` |
-
----
-
-## 🎯 Verification Milestones
-
-- [x] Obtain exact source tree matching LineageOS 24 (`b8c71b7aecec`)
-- [x] Set up AOSP Clang 12.0.5 (`clang-r416183b`) toolchain with `LLVM=1`
-- [x] Identify TrustZone TZASC IRQ 160 crash root cause with dynamic kprobes
-- [x] Implement compile-time Manual Hooks in `fs/` and `kernel/`
-- [x] Backport `path_umount` for safe module unmounting
-- [x] Resolve OpenSSL 3.0+ host build tool collisions
-- [x] Compile kernel and repack boot image using `magiskboot`
-- [x] Boot device into LineageOS 24 system without panics
-- [x] Align UAPI to version 5 to achieve full parity with Manager `v3.4.2`
-- [x] Verify live root execution, `ksud`, and Superuser / Module management tabs
-
----
-
 ## 📖 Documentation & Guides
 
-- 📚 [Documentation Hub & Index](docs/README.md)
-- 🧑‍💻 [End-User Installation & Root Guide (No compiling needed)](docs/USER_GUIDE.md)
-- 🔬 [In-Depth Technical Research & Engineering Report](docs/RESEARCH.md)
-- 🔄 [LineageOS OTA Updates & Kernel Lifecycle Guide](docs/OTA_AND_UPDATES.md)
-- 🛠️ [Troubleshooting, Log Extraction & Diagnostics](docs/TROUBLESHOOTING.md)
-- 🏗️ [Hardware Architecture & TrustZone TZASC Analysis](docs/ARCHITECTURE.md)
-- ⚡ [Flashing Methods (AnyKernel3, samloader, Odin, Heimdall)](docs/FLASHING_GUIDE.md)
-- 🤝 [Contributing Guidelines](docs/CONTRIBUTING.md)
+| Guide | Description |
+| :--- | :--- |
+| 📚 [Documentation Hub & Index](docs/README.md) | Full index of all project docs |
+| 🧑‍💻 [End-User Installation & Root Guide](docs/USER_GUIDE.md) | No compiling needed — start here if you just want root |
+| ⚡ [Flashing Methods](docs/FLASHING_GUIDE.md) | AnyKernel3, samloader, Odin, Heimdall — step by step |
+| 🔄 [OTA Updates & Kernel Lifecycle](docs/OTA_AND_UPDATES.md) | How to survive LineageOS OTA updates without losing root |
+| 🛠️ [Troubleshooting & Diagnostics](docs/TROUBLESHOOTING.md) | Log extraction, common errors, and fixes |
+| 🏗️ [Hardware Architecture & TZASC Analysis](docs/ARCHITECTURE.md) | Deep dive into Exynos 850 TrustZone constraints |
+| 🔬 [Technical Research & Engineering Report](docs/RESEARCH.md) | In-depth engineering decisions and findings |
+| 🤝 [Contributing Guidelines](docs/CONTRIBUTING.md) | How to contribute patches or port to another device |
 
 ---
 
 ## 📜 License
 
-- **Kernel patches & modifications:** GPL-2.0
+- **Kernel patches & modifications:** [GPL-2.0](LICENSE)
 - **Build scripts & documentation:** GPL-3.0-or-later
