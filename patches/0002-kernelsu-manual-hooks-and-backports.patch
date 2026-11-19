@@ -1,3 +1,16 @@
+diff --git a/arch/arm64/kernel/efi.c b/arch/arm64/kernel/efi.c
+index cae8830f7d97..4525b4d9894d 100644
+--- a/arch/arm64/kernel/efi.c
++++ b/arch/arm64/kernel/efi.c
+@@ -154,7 +154,7 @@ DEFINE_RAW_SPINLOCK(efi_rt_lock);
+ asmlinkage u64 *efi_rt_stack_top __ro_after_init;
+ 
+ /* EFI requires 8 KiB of stack space for runtime services */
+-_Static_assert(THREAD_SIZE >= SZ_8K);
++_Static_assert(THREAD_SIZE >= SZ_8K, "");
+ 
+ static int __init arm64_efi_rt_init(void)
+ {
 diff --git a/drivers/Kconfig b/drivers/Kconfig
 index 2bdb767e5518..e47f8e0490ce 100644
 --- a/drivers/Kconfig
