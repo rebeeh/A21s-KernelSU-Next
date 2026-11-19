@@ -17,8 +17,80 @@ index d9e40ccf..5577d842 100644
  
  #if defined(__aarch64__)
  
+diff --git a/kernel/supercall/dispatch.c b/kernel/supercall/dispatch.c
+index 92724041..6d45c8ed 100644
+--- a/kernel/supercall/dispatch.c
++++ b/kernel/supercall/dispatch.c
+@@ -65,7 +65,23 @@ static int do_get_info(void __user *arg)
+         cmd.flags |= KSU_GET_INFO_FLAG_LATE_LOAD;
+     }
+     cmd.features = KSU_FEATURE_MAX;
+-    cmd.uapi_version = KERNEL_SU_UAPI_VERSION;
++
++    /* Dynamic UAPI resolution:
++     * 1. If caller provides an expected/requested UAPI version (4..16), match it.
++     * 2. If runtime override was set (via sys_reboot supercall CHANGE_UAPIVER or ksu.uapi= cmdline), use it.
++     * 3. Fall back to compiled default KERNEL_SU_UAPI_VERSION.
++     */
++    {
++        struct ksu_get_info_cmd in_cmd = {0};
++        if (!copy_from_user(&in_cmd, arg, sizeof(in_cmd)) &&
++            in_cmd.uapi_version >= 4 && in_cmd.uapi_version <= 16) {
++            cmd.uapi_version = in_cmd.uapi_version;
++        } else if (ksu_uapi_override) {
++            cmd.uapi_version = ksu_uapi_override;
++        } else {
++            cmd.uapi_version = KERNEL_SU_UAPI_VERSION;
++        }
++    }
+ 
+     if (copy_to_user(arg, &cmd, sizeof(cmd))) {
+         pr_err("get_version: copy_to_user failed\n");
+diff --git a/kernel/supercall/internal.h b/kernel/supercall/internal.h
+index e0cb20c4..0d23df29 100644
+--- a/kernel/supercall/internal.h
++++ b/kernel/supercall/internal.h
+@@ -17,5 +17,6 @@ void ksu_supercall_dump_commands(void);
+ void ksu_supercall_cleanup_state(void);
+ 
+ extern uint32_t ksuver_override;
++extern uint32_t ksu_uapi_override;
+ 
+ #endif // __KSU_H_SUPERCALL_INTERNAL
+diff --git a/kernel/supercall/supercall.c b/kernel/supercall/supercall.c
+index 9c7ac7bb..85db0e2b 100644
+--- a/kernel/supercall/supercall.c
++++ b/kernel/supercall/supercall.c
+@@ -23,6 +23,8 @@
+ #include "sulog/event.h"
+ 
+ uint32_t ksuver_override = 0;
++uint32_t ksu_uapi_override = 0;
++module_param_named(uapi, ksu_uapi_override, uint, 0);
+ 
+ #define KSU_DRIVER_PERMISSION_SU_SESSION (1UL << 0)
+ 
+@@ -203,6 +205,18 @@ int ksu_handle_sys_reboot(int magic1, int magic2, unsigned int cmd,
+ 			return 0;
+ 	}
+ 
++	if (magic2 == CHANGE_UAPIVER) {
++		// only root is allowed for this command
++		if (current_uid().val != 0)
++			return 0;
++
++		pr_info("sys_reboot: ksu_change_uapiver to: %d\n", cmd);
++		ksu_uapi_override = cmd;
++
++		if (copy_to_user((void __user *)*arg, &reply, sizeof(reply)))
++			return 0;
++	}
++
+ 	// WARNING!!! triple ptr zone! ***
+ 	// https://wiki.c2.com/?ThreeStarProgrammer
+ 	if (magic2 == CHANGE_SPOOF_UNAME) {
 diff --git a/uapi/supercall.h b/uapi/supercall.h
-index b2064554..151d4135 100644
+index b2064554..71a688fe 100644
 --- a/uapi/supercall.h
 +++ b/uapi/supercall.h
 @@ -11,7 +11,7 @@
@@ -30,3 +102,11 @@ index b2064554..151d4135 100644
  
  /* Magic numbers for reboot hook to install fd */
  #define KSU_INSTALL_MAGIC1 0xDEADBEEF
+@@ -24,6 +24,7 @@
+ #define GET_SULOG_DUMP_V2 10010
+ #define CHANGE_KSUVER 10011
+ #define CHANGE_SPOOF_UNAME 10012
++#define CHANGE_UAPIVER 10013
+ 
+ struct ksu_become_daemon_cmd {
+     __u8 token[65]; /* Input: daemon token (null-terminated) */

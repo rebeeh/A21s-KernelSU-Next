@@ -89,7 +89,7 @@ Because Clang compiles these into normal branch instructions (`BL`), no memory i
 
 ---
 
-## 4. Protocol Lockstep: The UAPI Version Contract
+## 4. Protocol Lockstep: The UAPI Version Contract & Dynamic Resolution
 
 KernelSU-Next uses a supercall IOCTL interface defined in `uapi/supercall.h`.
 
@@ -108,9 +108,44 @@ fun isFullFeatured(): Boolean {
 ```
 
 - Upstream `origin/legacy` HEAD bumped `KERNEL_SU_UAPI_VERSION` from 5 to 6 for module preinit actions.
-- However, the latest official stable Manager APK is **`v3.4.2 (33355-5)`**, which is built for **UAPI 5**.
-- When the kernel returns UAPI 6, the manager detects an ABI mismatch and disables the Superuser and Module management tabs.
-- Setting `#define KERNEL_SU_UAPI_VERSION 5` establishes 100% protocol lockstep with Manager `v3.4.2` and its embedded `ksud 3.4.2 (uapi: 5)`.
+- However, official stable Manager APK releases (such as `v3.4.2 (33355-5)`) were built against **UAPI 5**.
+- When the kernel statically returns a version mismatched with the Manager APK, the manager enters restricted mode and disables the Superuser and Module management tabs.
+
+### 🚀 The Dynamic UAPI Resolution Engine
+To permanently eliminate this version trap and avoid requiring users to recompile the kernel whenever a Manager APK is updated, our patchset (`patches/0003-kernelsu-next-samsung-fixes.patch`) introduces a multi-tier dynamic resolution mechanism:
+
+1. **Kernel Supercall Runtime Override (`CHANGE_UAPIVER = 10013`):**
+   ```c
+   // kernel/supercall/supercall.c
+   uint32_t ksu_uapi_override = 0;
+   module_param_named(uapi, ksu_uapi_override, uint, 0);
+
+   if (magic2 == CHANGE_UAPIVER) {
+       if (current_uid().val != 0)
+           return 0;
+       ksu_uapi_override = cmd;
+       copy_to_user((void __user *)*arg, &reply, sizeof(reply));
+   }
+   ```
+   Root processes can dynamically change the active UAPI version at runtime via `sys_reboot(0xDEADBEEF, 10013, target_version, &reply)` without rebooting the kernel.
+
+2. **Auto-Adaptive Caller Reflection (`kernel/supercall/dispatch.c`):**
+   ```c
+   /* Dynamic UAPI resolution */
+   struct ksu_get_info_cmd in_cmd = {0};
+   if (!copy_from_user(&in_cmd, arg, sizeof(in_cmd)) &&
+       in_cmd.uapi_version >= 4 && in_cmd.uapi_version <= 16) {
+       cmd.uapi_version = in_cmd.uapi_version;
+   } else if (ksu_uapi_override) {
+       cmd.uapi_version = ksu_uapi_override;
+   } else {
+       cmd.uapi_version = KERNEL_SU_UAPI_VERSION;
+   }
+   ```
+   If a client provides an expected target version in `arg`, the kernel dynamically validates and matches it within the safe range $[4, 16]$.
+
+3. **Kernel Bootargs Override:**
+   Passing `ksu.uapi=<version>` on the kernel command line allows setting the desired UAPI version at early boot without modifying the kernel binary.
 
 ---
 

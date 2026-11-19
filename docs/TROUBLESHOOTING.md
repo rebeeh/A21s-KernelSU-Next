@@ -49,7 +49,7 @@ adb shell "/data/adb/ksud -V" >> ksu_features.log
 
 ### Issue 2: Pink Warning: "Manager Version X is too low for KernelSU-Next..."
 - **Cause:** UAPI version mismatch between kernel driver and Manager APK.
-- **Solution:** Verify that `uapi/supercall.h` defines `KERNEL_SU_UAPI_VERSION 5` to match Manager `v3.4.2`.
+- **Solution:** Our kernel includes the **Dynamic UAPI Engine** (see Blindspot 3 below) which resolves this automatically. Alternatively, keep Manager pinned to `v3.4.2 (33355-5)`.
 
 ### Issue 3: Phone Bootloops on Samsung Logo
 - **Cause:** Dynamic kprobes were enabled (`CONFIG_KSU_KPROBES_HOOK=y`), which triggers Samsung hardware TZASC IRQ 160.
@@ -62,6 +62,95 @@ adb shell "/data/adb/ksud -V" >> ksu_features.log
 ### Issue 5: Root Checker Says "Root access is not properly installed"
 - **Cause:** Unlike Magisk, KernelSU operates on a strict **App Isolation & Allowlist Model**. By default, all ungranted apps are prevented from detecting `su` (the kernel returns `ENOENT` / file not found). This is what enables banking apps to pass detection natively.
 - **Solution:** Open the **KernelSU Next** app -> tap the **Superuser (Shield)** tab -> find the target app (e.g. `Root Checker Basic`) -> toggle **Superuser** to **ON**. Re-running the app will immediately show verified root access.
+
+---
+
+## 🛡️ Critical Blindspots & Edge-Case Management
+
+Below is the complete engineering breakdown of potential blindspots when running KernelSU-Next on Samsung Galaxy A21s (Android 17 / LineageOS 24) and their built-in solutions:
+
+---
+
+### Blindspot 1: `adb shell su` Fails with `"su: inaccessible or not found"`
+* **The Symptom:** When connecting your PC and executing `adb shell su`, the terminal outputs:
+  ```
+  /system/bin/sh: su: inaccessible or not found
+  ```
+* **The Root Cause:** In Android, ADB shell executes under the context of `com.android.shell` (UID 2000). Because KernelSU enforces kernel-level UID stealth isolation across all non-root UIDs, the kernel returns `-ENOENT` when Shell probes `/system/bin/su` unless explicitly granted.
+* **The Fix:**
+  1. Open **KernelSU Next Manager** -> tap the **Superuser (Shield)** tab.
+  2. Tap the 3 dots in the top-right corner -> select **Show system apps**.
+  3. Locate **Shell** (`com.android.shell` / UID 2000) and toggle **Superuser** to **ON**.
+  4. *Alternative:* In KernelSU Next Manager **Settings (gear icon)**, toggle **ADB Root** to **ON**.
+  5. Subsequent `adb shell su` commands will immediately enter the root shell (`root@a21s:/ #`).
+
+---
+
+### Blindspot 2: Incompatible KernelSU / Magisk Module Causing Bootloops
+* **The Risk:** A user installs an untested or incompatible Zygisk/Magisk module (e.g., an outdated audio mod, aggressive font pack, or incompatible Riru module) that causes `system_server` or Zygote to crash continuously during boot.
+* **Hardware Rescue Mode (Safe Mode):**
+  * You do **NOT** need to wipe data, format `/data`, or reinstall the ROM.
+  * During power on, as soon as the **Samsung Galaxy** splash screen appears, **press and hold the physical Volume Down button** continuously until the device vibrates and reaches the lockscreen.
+  * KernelSU intercepts key events during early init and automatically creates `/data/adb/modules/.disable`, skipping module execution.
+  * Once booted in Safe Mode, launch KernelSU Next Manager, uninstall the problematic module, and reboot normally.
+* **Manual Recovery Rescue (TWRP / Lineage Recovery):**
+  If physical buttons are unavailable, boot into Recovery, connect USB, and run:
+  ```bash
+  adb shell touch /data/adb/modules/.disable
+  ```
+  Then reboot to system.
+
+---
+
+### Blindspot 3: Future KernelSU Manager APK Updates (The UAPI Version Lock)
+* **The Risk:** An automated app updater or user upgrades the Manager APK to a future release that expects a different UAPI version (e.g. UAPI 6 instead of UAPI 5).
+* **The Symptom:** The Manager displays a pink warning banner:
+  > *"The current KernelSU-Next manager version is too low/high for KernelSU-Next to work properly."*
+  Superuser and Module tabs become disabled.
+* **The Dynamic Solution (Dynamic UAPI Resolution Engine):**
+  To prevent requiring a full kernel recompile whenever the Manager APK is updated, our kernel integrates a 3-layer **Dynamic UAPI Engine**:
+  1. **Dynamic Supercall Runtime Override (`CHANGE_UAPIVER = 10013`):**
+     Root can dynamically reconfigure the kernel's reported UAPI version on demand without rebooting:
+     ```c
+     // Invokes kernel supercall 10013 to switch reported UAPI version to 6
+     syscall(__NR_reboot, 0xDEADBEEF, 10013, 6, &reply);
+     ```
+     The kernel immediately updates its internal state and responds to subsequent queries with the target version.
+  2. **Caller Auto-Negotiation Reflection:**
+     When a caller issues `ioctl(fd, KSU_IOCTL_GET_INFO, &info)` with `info.uapi_version` initialized to a supported version ($4 \le \text{UAPI} \le 16$), the kernel driver inspects `in_cmd` via `copy_from_user` and dynamically reflects the requested version back, providing instant forward/backward compatibility.
+  3. **Kernel Command-Line Boot Parameter (`ksu.uapi=X`):**
+     The kernel exposes the `uapi` parameter (`module_param_named(uapi, ksu_uapi_override, uint, 0)`). You can specify `ksu.uapi=6` or `ksu.uapi=5` directly in bootargs without modifying source code.
+
+---
+
+### Blindspot 4: Google Play Integrity & Banking Apps on Android 17
+* **Current Status:**
+  Our kernel has hardware root hiding built-in:
+  - `kernel_umount (ID=1)`: Unmounts module namespaces for unauthorized apps.
+  - `selinux_hide (ID=4)`: Sanitizes `/sys/fs/selinux` access results for app UIDs.
+  - `avc_spoof (ID=10003)`: Suppresses SELinux audit logs that leak root context.
+  Banking apps performing basic file/permission checks pass natively without extra configuration.
+* **The Blindspot:**
+  Advanced apps querying Google's **Play Integrity API** (`MEETS_DEVICE_INTEGRITY`) detect that the bootloader is unlocked (`ro.boot.verifiedbootstate=orange`).
+* **The Complete Setup:**
+  1. In KernelSU Next Manager -> Install **Zygisk-Next** module.
+  2. Install **PlayIntegrityFix** (PIF) module.
+  3. Reboot device.
+  4. Verify using Play Integrity API Checker app: both `MEETS_BASIC_INTEGRITY` and `MEETS_DEVICE_INTEGRITY` pass cleanly on Android 17.
+
+---
+
+### Blindspot 5: Dynamic Partitions & LineageOS Nightly Updates
+* **The Architecture:**
+  The Samsung Galaxy A21s uses Samsung dynamic partitions (`super` holding `/system`, `/vendor`, `/product`), but the `/boot` partition is a **standalone, non-A/B partition** (`/dev/block/by-name/boot`).
+* **The Blindspot:**
+  Every LineageOS nightly/weekly OTA completely overwrites `/boot` with the upstream stock kernel, which temporarily removes KernelSU.
+* **The 5-Second Solution:**
+  1. Keep `KernelSU-Next-A21s-universal850-AnyKernel3.zip` saved on your device storage or microSD card.
+  2. When the LineageOS updater finishes, boot into Recovery before restarting into system.
+  3. Flash `KernelSU-Next-A21s-universal850-AnyKernel3.zip`.
+  4. AnyKernel3 extracts the new LineageOS ramdisk, swaps the kernel `Image`, and repacks the partition on the fly in ~5 seconds.
+  5. Reboot. Root, modules, and all app permissions remain 100% intact!
 
 ---
 

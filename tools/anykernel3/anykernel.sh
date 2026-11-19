@@ -15,7 +15,7 @@ device.name2=a21snsxx
 device.name3=SM-A217F
 device.name4=SM-A217M
 device.name5=SM-A217N
-supported.versions=11-15
+supported.versions=11-18
 '; } # end properties
 
 ### AnyKernel install

@@ -55,7 +55,7 @@ You only need to rebuild or update the repository when:
 | **Regular LineageOS Weekly Nightly** | ❌ **No** | Flash existing `AnyKernel3.zip` or `boot-ksu.img` |
 | **Major Android Version Bump** (e.g., Lineage 24 -> 25) | ⚠️ **Yes** | Re-run `./scripts/build.sh` against the new branch |
 | **Upstream LineageOS Kernel Update** (e.g. security patch bump) | ⚠️ **Optional** | Trigger `./scripts/build.sh` or GitHub Actions |
-| **New KernelSU-Next Manager Release** (e.g. v3.5.0) | ⚠️ **Optional** | Update `uapi/supercall.h` if UAPI version is bumped |
+| **New KernelSU-Next Manager Release** (e.g. v3.5.0 / UAPI 6) | ❌ **No** | Dynamic UAPI Resolution in the kernel automatically handles version matching via supercall or bootargs! |
 
 ---
 

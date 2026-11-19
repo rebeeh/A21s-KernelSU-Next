@@ -56,7 +56,7 @@ A21s-KernelSU-Next/
 ├── patches/
 │   ├── 0001-build-host-openssl-3-compat.patch          # OpenSSL 3 host fixes
 │   ├── 0002-kernelsu-manual-hooks-and-backports.patch  # 5 manual hooks & path_umount
-│   └── 0003-kernelsu-next-samsung-fixes.patch          # UAPI 5 alignment & copy_to_kernel_nofault
+│   └── 0003-kernelsu-next-samsung-fixes.patch          # Dynamic UAPI engine, UAPI 5 default & copy_to_kernel_nofault
 ├── scripts/
 │   ├── build.sh                   # Builds kernel Image, repacks boot.img and Odin .tar
 │   ├── package_anykernel3.sh      # Creates recovery-flashable AnyKernel3 zip
