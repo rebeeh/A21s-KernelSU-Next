@@ -74,3 +74,25 @@ Download the latest pre-compiled files from the [GitHub Releases](https://github
    - **Status:** `Working [BUILT-IN (GKI1)]`
    - **Hook mode:** `Manual`
 4. Tap the **Superuser (Shield)** icon on the bottom navigation bar to grant root access to apps!
+
+---
+
+## 🔒 Important: Why Root Checker Shows "Not Properly Installed" at First
+
+If you install a root detection app like **Root Checker Basic** from the Play Store and open it, it will show:
+> ❌ *"Sorry! Root access is not properly installed on this device."*
+
+### Why This Happens (KernelSU vs Magisk Security Model):
+1. **Magisk (Legacy Global Root):** Exposes `/system/bin/su` to all apps on the phone. Any app can detect root by checking if `/system/bin/su` exists, triggering root detections in banking apps.
+2. **KernelSU-Next (Kernel Isolation & Stealth by Default):**
+   - The kernel driver completely hides `su` and all root capabilities from unapproved applications.
+   - When an unapproved app checks for root, the kernel returns `-ENOENT` (File Not Found). The app believes the phone is 100% unrooted!
+   - This allows banking apps, Google Wallet, games, and work profiles to run without detection natively.
+
+### How to Grant Root Access to an App:
+1. Open the **KernelSU Next** app.
+2. Tap the **Superuser (Shield)** tab at the bottom.
+3. Locate your application (e.g., **Root Checker Basic**).
+4. Tap the application and toggle **Superuser** to **ON**.
+5. Switch back to your app — it will now immediately have full root permissions:
+   > ✅ *"Congratulations! Root access is properly installed on this device!"*

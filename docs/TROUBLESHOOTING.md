@@ -59,6 +59,10 @@ adb shell "/data/adb/ksud -V" >> ksu_features.log
 - **Cause:** LineageOS OTA overwrote the boot partition with the stock kernel.
 - **Solution:** Flash `KernelSU-Next-A21s-universal850-AnyKernel3.zip` in Recovery (or re-flash `boot-ksu.img` via `samloader`).
 
+### Issue 5: Root Checker Says "Root access is not properly installed"
+- **Cause:** Unlike Magisk, KernelSU operates on a strict **App Isolation & Allowlist Model**. By default, all ungranted apps are prevented from detecting `su` (the kernel returns `ENOENT` / file not found). This is what enables banking apps to pass detection natively.
+- **Solution:** Open the **KernelSU Next** app -> tap the **Superuser (Shield)** tab -> find the target app (e.g. `Root Checker Basic`) -> toggle **Superuser** to **ON**. Re-running the app will immediately show verified root access.
+
 ---
 
 ## 3. How to Report an Issue
