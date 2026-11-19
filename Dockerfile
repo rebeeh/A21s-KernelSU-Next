@@ -52,7 +52,7 @@ RUN mkdir -p /workspace/tools && \
     chmod +x /workspace/tools/magiskboot
 
 # 4. Clone LineageOS 24 kernel tree & KernelSU-Next
-RUN git clone -b lineage-24.0 --depth=1 https://github.com/LineageOS/android_kernel_samsung_universal850.git /workspace/a21s-kernel && \
+RUN git clone -b lineage-24.0 --depth=1 https://github.com/samsungexynos850/android_kernel_samsung_exynos850.git /workspace/a21s-kernel && \
     cd /workspace/a21s-kernel && \
     git clone -b legacy --depth=1 https://github.com/KernelSU-Next/KernelSU-Next.git KernelSU-Next && \
     ln -sf KernelSU-Next/kernel drivers/kernelsu

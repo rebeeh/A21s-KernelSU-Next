@@ -24,18 +24,19 @@ This directory contains technical architecture documentation, flashing guides fo
 
 This project builds upon and integrates with the following key open-source repositories:
 
-1. **Official LineageOS Kernel Tree (`universal850`):**
-   - Repository: [`LineageOS/android_kernel_samsung_universal850`](https://github.com/LineageOS/android_kernel_samsung_universal850)
-   - Branch: `lineage-24.0` (Linux 4.19.325)
-   - Role: Upstream base kernel tree utilized for our compilation and patchsets.
-
-2. **Community Exynos 850 Kernel Organization:**
+1. **Exynos 850 Kernel Tree for LineageOS 24:**
    - Repository: [`samsungexynos850/android_kernel_samsung_exynos850`](https://github.com/samsungexynos850/android_kernel_samsung_exynos850)
-   - Role: Community unified kernel tree for Samsung Exynos 850 platform devices.
+   - Branch: `lineage-24.0` (Linux 4.19.325, commit `b8c71b7aecec`)
+   - Role: Upstream base kernel tree utilized for compilation and our KernelSU-Next patchset.
 
-3. **LineageOS Device Tree for Galaxy A21s:**
+2. **Official LineageOS Device Tree for Galaxy A21s:**
    - Repository: [`LineageOS/android_device_samsung_a21s`](https://github.com/LineageOS/android_device_samsung_a21s)
-   - Role: Device configuration, partition definitions (`boot` partition size: 36 MiB), and init scripts.
+   - Role: Hardware definitions, partition geometry (`boot` size: 36 MiB limit), header version (2), page size (2048), and init scripts.
+
+3. **Official LineageOS Prebuilt Toolchain:**
+   - Repository: [`LineageOS/android_prebuilts_clang_kernel_linux-x86_clang-r416183b`](https://github.com/LineageOS/android_prebuilts_clang_kernel_linux-x86_clang-r416183b)
+   - Branch: `lineage-20.0`
+   - Role: Clang 12.0.5 compiler with integrated LLVM assembler and LLD linker.
 
 4. **KernelSU-Next Upstream:**
    - Repository: [`KernelSU-Next/KernelSU-Next`](https://github.com/KernelSU-Next/KernelSU-Next)

@@ -38,8 +38,8 @@ fi
 # 4. Kernel Source Setup
 if [ ! -d "${KERNEL_DIR}" ]; then
     echo "[+] Kernel directory not found at ${KERNEL_DIR}."
-    echo "[*] Cloning the LineageOS kernel tree (lineage-24.0)..."
-    git clone -b lineage-24.0 --depth=1 https://github.com/LineageOS/android_kernel_samsung_universal850.git "${KERNEL_DIR}"
+    echo "[*] Cloning the Exynos 850 LineageOS kernel tree (lineage-24.0)..."
+    git clone -b lineage-24.0 --depth=1 https://github.com/samsungexynos850/android_kernel_samsung_exynos850.git "${KERNEL_DIR}"
 fi
 
 # 5. KernelSU-Next Legacy Setup

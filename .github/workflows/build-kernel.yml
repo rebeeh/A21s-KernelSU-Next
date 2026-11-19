@@ -35,7 +35,7 @@ jobs:
 
       - name: Clone Kernel Source & KernelSU-Next
         run: |
-          git clone -b lineage-24.0 --depth=1 https://github.com/LineageOS/android_kernel_samsung_universal850.git a21s-kernel
+          git clone -b lineage-24.0 --depth=1 https://github.com/samsungexynos850/android_kernel_samsung_exynos850.git a21s-kernel
           cd a21s-kernel
           git clone -b legacy --depth=1 https://github.com/KernelSU-Next/KernelSU-Next.git KernelSU-Next
           ln -sf KernelSU-Next/kernel drivers/kernelsu

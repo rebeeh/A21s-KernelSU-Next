@@ -126,20 +126,15 @@ This enables module mount hiding without kernel crashes.
 
 ---
 
-## 6. Comparative Analysis of Exynos 850 Trees
+## 6. Upstream Kernel Tree: `samsungexynos850/android_kernel_samsung_exynos850`
 
-During research and development, multiple Exynos 850 kernel source trees were evaluated:
-
-### 1. `LineageOS/android_kernel_samsung_universal850` (Target Tree)
-- **URL:** [https://github.com/LineageOS/android_kernel_samsung_universal850](https://github.com/LineageOS/android_kernel_samsung_universal850)
-- **Branch:** `lineage-24.0` (Linux 4.19.325)
-- **Evaluation:** This is the official kernel tree actively maintained by LineageOS maintainers for Galaxy A21s on Android 15. It incorporates all upstream LineageOS kernel hardening, binder IPC fixes for Android 15, and camera/display driver patches specifically compiled for LineageOS userland.
-- **Decision:** Selected as our target kernel tree to ensure 100% binary driver compatibility with LineageOS 24 releases.
-
-### 2. `samsungexynos850/android_kernel_samsung_exynos850` (Community Unified Tree)
 - **URL:** [https://github.com/samsungexynos850/android_kernel_samsung_exynos850](https://github.com/samsungexynos850/android_kernel_samsung_exynos850)
-- **Evaluation:** Developed by the Exynos 850 developer community (Astrako, physwizz) to unify kernel support across multiple Samsung devices (A21s, A12s, A13, A04s) across OneUI 2.0 through OneUI 5.0 and GSI environments.
-- **Comparison:** While great for multi-ROM and OneUI porting, it carries generic patches that diverge from the clean LineageOS 24 binder/SELinux requirements. However, its DTS and battery charging patches provided valuable insights for TrustZone stability testing.
+- **Branch:** `lineage-24.0` (Linux 4.19.325, HEAD commit `b8c71b7aecec`)
+
+### Role in Development:
+This is the verified kernel source tree maintaining the `lineage-24.0` branch for Exynos 850 devices (Galaxy A21s). It integrates the official Samsung vendor BSP (`universal850`) updated for modern Android 15 LineageOS userland, Binder IPC, and device drivers.
+
+All KernelSU-Next patches in `patches/` apply cleanly onto commit `b8c71b7aecec` of this tree.
 
 ---
 
