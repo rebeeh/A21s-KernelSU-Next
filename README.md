@@ -110,10 +110,10 @@ Trigger the automated build directly from your browser via **[GitHub Actions](ht
 
 | Platform | Recommended Flashing Tool | Target File |
 | :--- | :--- | :--- |
-| **Any OS / No PC** | **LineageOS Recovery / TWRP** | `KernelSU-Next-A21s-universal850-AnyKernel3.zip` |
-| **Windows** | **Samsung Odin3 v3.14+** (Slot: AP) | `out/boot-ksu.tar` |
-| **Linux** | **`samloader`** (`samloader flash --partition BOOT out/boot-ksu.img`) | `out/boot-ksu.img` |
-| **macOS / Linux** | **`heimdall`** (`heimdall flash --BOOT out/boot-ksu.img`) | `out/boot-ksu.img` |
+| **Any OS / No PC** | **[LineageOS Recovery](https://wiki.lineageos.org/adb_fastboot_guide) / [TWRP](https://twrp.me)** | `KernelSU-Next-A21s-universal850-AnyKernel3.zip` |
+| **Windows** | **[Samsung Odin3 v3.14+](https://odindownload.com)** (Slot: AP) | `out/boot-ksu.tar` |
+| **Linux** | **[`samloader`](https://github.com/topjohnwu/samloader-rs)** (`samloader flash --partition BOOT out/boot-ksu.img`) | `out/boot-ksu.img` |
+| **macOS / Linux** | **[`heimdall`](https://github.com/Benjamin-Dobell/Heimdall)** (`heimdall flash --BOOT out/boot-ksu.img`) | `out/boot-ksu.img` |
 
 ---
 

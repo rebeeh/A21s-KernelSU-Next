@@ -13,9 +13,9 @@ This guide provides tested instructions for flashing the KernelSU-Next custom ke
 
 ---
 
-## Method 1: Using `samloader` on Linux (Recommended & Fastest)
+## Method 1: Using [`samloader`](https://github.com/topjohnwu/samloader-rs) on Linux (Recommended & Fastest)
 
-`samloader` flashes partitions directly in Samsung Download Mode in ~1 second.
+[`samloader`](https://github.com/topjohnwu/samloader-rs) flashes partitions directly in Samsung Download Mode in ~1 second.
 
 1. Reboot your phone into Download Mode:
    ```bash
@@ -34,8 +34,8 @@ This guide provides tested instructions for flashing the KernelSU-Next custom ke
 
 ## Method 2: Using AnyKernel3 in Recovery (No PC Required!)
 
-1. Copy `KernelSU-Next-A21s-universal850-AnyKernel3.zip` to internal storage or SD card.
-2. Boot into Recovery (TWRP / OrangeFox / Lineage Recovery).
+1. Copy [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.0.0/KernelSU-Next-A21s-universal850-AnyKernel3.zip) to internal storage or SD card.
+2. Boot into Recovery ([TWRP](https://twrp.me) / [OrangeFox](https://orangefox.download) / Lineage Recovery).
 3. Select **Install** / **Apply Update** -> flash the `.zip`.
 4. Reboot system.
 
@@ -44,7 +44,7 @@ This guide provides tested instructions for flashing the KernelSU-Next custom ke
 ## Method 3: Using Odin on Windows
 
 1. Boot device into Download Mode.
-2. Open **Odin v3.14.4** on Windows.
+2. Open **[Odin v3.14.4](https://odindownload.com)** on Windows.
 3. Verify that your device is detected (blue `[COM:XX]` box in Odin).
 4. Click **AP** and select the generated archive:
    `boot-ksu.tar`
@@ -53,7 +53,7 @@ This guide provides tested instructions for flashing the KernelSU-Next custom ke
 
 ---
 
-## Method 4: Using Heimdall on macOS & Linux
+## Method 4: Using [Heimdall](https://github.com/Benjamin-Dobell/Heimdall) on macOS & Linux
 
 1. Boot device into Download Mode.
 2. Verify device detection:
@@ -70,7 +70,7 @@ This guide provides tested instructions for flashing the KernelSU-Next custom ke
 
 ## Post-Boot Verification
 
-1. Install the official **KernelSU-Next Manager APK**:
+1. Install the official **KernelSU-Next Manager APK** ([download `KernelSU_Next_v3.4.2.apk`](https://github.com/KernelSU-Next/KernelSU-Next/releases/download/v3.4.2/KernelSU_Next_v3.4.2.apk)):
    ```bash
    adb install KernelSU_Next_v3.4.2.apk
    ```

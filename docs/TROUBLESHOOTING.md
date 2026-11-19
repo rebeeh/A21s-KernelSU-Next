@@ -45,9 +45,9 @@ If a user doesn't have a GitHub account or isn't logged in on their phone/PC bro
    * GitHub displays its standard login screen: `https://github.com/login?return_to=...`.
    * The `return_to` parameter preserves the entire draft! Once you sign in (or sign up), GitHub automatically forwards you to the issue creation page with all fields populated.
 2. **Zero-Account Alternative (No Login Required):**
-   * Both `build.py report-issue` and `00_ksu_crash_reporter.sh` automatically generate an **anonymous online log link** via `https://paste.rs` (e.g. `https://paste.rs/xyz123`).
+   * Both `build.py report-issue` and `00_ksu_crash_reporter.sh` automatically generate an **anonymous online log link** via [paste.rs](https://paste.rs) (e.g. `https://paste.rs/xyz123`).
    * The raw file is also always preserved locally on the phone (`/sdcard/Download/ksu_crash_<timestamp>.log`) and on PC (`out/logs/`).
-   * Users without GitHub can simply copy the link or file and drop it into community support channels (Telegram group, XDA Developers thread, or Discord)!
+   * Users without GitHub can simply copy the link or file and drop it into community support channels (Telegram group, [XDA Developers](https://xdaforums.com) thread, or Discord)!
 
 ---
 
@@ -104,7 +104,7 @@ adb shell "/data/adb/ksud -V" >> ksu_features.log
 
 ### Issue 4: Lost Root After LineageOS System Update
 - **Cause:** LineageOS OTA overwrote the boot partition with the stock kernel.
-- **Solution:** Flash `KernelSU-Next-A21s-universal850-AnyKernel3.zip` in Recovery (or re-flash `boot-ksu.img` via `samloader`).
+- **Solution:** Flash [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.0.0/KernelSU-Next-A21s-universal850-AnyKernel3.zip) in Recovery (or re-flash `boot-ksu.img` via [`samloader`](https://github.com/topjohnwu/samloader-rs)).
 
 ### Issue 5: Root Checker Says "Root access is not properly installed"
 - **Cause:** Unlike Magisk, KernelSU operates on a strict **App Isolation & Allowlist Model**. By default, all ungranted apps are prevented from detecting `su` (the kernel returns `ENOENT` / file not found). This is what enables banking apps to pass detection natively.
@@ -180,8 +180,8 @@ Below is the complete engineering breakdown of potential blindspots when running
 * **The Blindspot:**
   Advanced apps querying Google's **Play Integrity API** (`MEETS_DEVICE_INTEGRITY`) detect that the bootloader is unlocked (`ro.boot.verifiedbootstate=orange`).
 * **The Complete Setup:**
-  1. In KernelSU Next Manager -> Install **Zygisk-Next** module.
-  2. Install **PlayIntegrityFix** (PIF) module.
+  1. In KernelSU Next Manager -> Install **[Zygisk-Next](https://github.com/Dr-TSNG/ZygiskNext)** module.
+  2. Install **[PlayIntegrityFix](https://github.com/chiteroman/PlayIntegrityFix)** (PIF) module.
   3. Reboot device.
   4. Verify using Play Integrity API Checker app: both `MEETS_BASIC_INTEGRITY` and `MEETS_DEVICE_INTEGRITY` pass cleanly on Android 17.
 
@@ -193,9 +193,9 @@ Below is the complete engineering breakdown of potential blindspots when running
 * **The Blindspot:**
   Every LineageOS nightly/weekly OTA completely overwrites `/boot` with the upstream stock kernel, which temporarily removes KernelSU.
 * **The 5-Second Solution:**
-  1. Keep `KernelSU-Next-A21s-universal850-AnyKernel3.zip` saved on your device storage or microSD card.
+  1. Keep [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.0.0/KernelSU-Next-A21s-universal850-AnyKernel3.zip) saved on your device storage or microSD card.
   2. When the LineageOS updater finishes, boot into Recovery before restarting into system.
-  3. Flash `KernelSU-Next-A21s-universal850-AnyKernel3.zip`.
+  3. Flash [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.0.0/KernelSU-Next-A21s-universal850-AnyKernel3.zip).
   4. AnyKernel3 extracts the new LineageOS ramdisk, swaps the kernel `Image`, and repacks the partition on the fly in ~5 seconds.
   5. Reboot. Root, modules, and all app permissions remain 100% intact!
 

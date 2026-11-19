@@ -28,14 +28,14 @@ You have two fast ways to restore root:
 
 ### Method A: Flash AnyKernel3 via Recovery (No PC Required!)
 
-1. Keep `KernelSU-Next-A21s-universal850-AnyKernel3.zip` saved on your phone’s internal storage or microSD card.
+1. Keep [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.0.0/KernelSU-Next-A21s-universal850-AnyKernel3.zip) saved on your phone’s internal storage or microSD card.
 2. Let LineageOS download and apply the OTA update.
 3. Before rebooting to system (or after rebooting into recovery):
-   - In Recovery, select **Install** / **Apply Update** -> Choose `KernelSU-Next-A21s-universal850-AnyKernel3.zip`.
+   - In Recovery, select **Install** / **Apply Update** -> Choose [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.0.0/KernelSU-Next-A21s-universal850-AnyKernel3.zip).
    - AnyKernel3 dynamically pulls the new LineageOS ramdisk, injects our KernelSU kernel `Image`, and writes it back to `boot` in 5 seconds.
 4. Reboot into system. Root access, modules, and app profiles are fully preserved!
 
-### Method B: Flash `boot-ksu.img` via `samloader` / Odin (1 Second)
+### Method B: Flash `boot-ksu.img` via [`samloader`](https://github.com/topjohnwu/samloader-rs) / [Odin](https://odindownload.com) (1 Second)
 
 If you have a PC connected:
 ```bash

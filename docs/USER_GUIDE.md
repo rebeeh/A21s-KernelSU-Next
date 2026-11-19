@@ -10,10 +10,10 @@ Download the latest pre-compiled files from the [GitHub Releases](https://github
 
 | File Name | Purpose | Flashing Tool |
 |---|---|---|
-| `KernelSU-Next-A21s-universal850-AnyKernel3.zip` | Flashable ZIP (Easiest) | Lineage Recovery / TWRP / OrangeFox |
-| `boot-ksu.tar` | Odin AP package | Samsung Odin (Windows) |
-| `boot-ksu.img` | Raw boot partition image | `samloader` / `heimdall` (Linux / Mac) |
-| `KernelSU_Next_v3.4.2.apk` | Official Root Manager app | Android Package Installer / ADB |
+| [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.0.0/KernelSU-Next-A21s-universal850-AnyKernel3.zip) | Flashable ZIP (Easiest) | Lineage Recovery / [TWRP](https://twrp.me) / [OrangeFox](https://orangefox.download) |
+| [`boot-ksu.tar`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.0.0/boot-ksu.tar) | Odin AP package | [Samsung Odin](https://odindownload.com) (Windows) |
+| [`boot-ksu.img`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.0.0/boot-ksu.img) | Raw boot partition image | [`samloader`](https://github.com/topjohnwu/samloader-rs) / [`heimdall`](https://github.com/Benjamin-Dobell/Heimdall) (Linux / Mac) |
+| [`KernelSU_Next_v3.4.2.apk`](https://github.com/KernelSU-Next/KernelSU-Next/releases/download/v3.4.2/KernelSU_Next_v3.4.2.apk) | Official Root Manager app | Android Package Installer / ADB |
 
 ---
 
@@ -38,7 +38,7 @@ Download the latest pre-compiled files from the [GitHub Releases](https://github
      adb reboot recovery
      ```
 3. In Recovery:
-   - **TWRP / OrangeFox:** Tap **Install** -> Select the `.zip` -> Swipe to Flash.
+   - **[TWRP](https://twrp.me) / [OrangeFox](https://orangefox.download):** Tap **Install** -> Select the `.zip` -> Swipe to Flash.
    - **Lineage Recovery:** Tap **Apply update** -> **Apply from ADB** -> On PC run:
      ```bash
      adb sideload KernelSU-Next-A21s-universal850-AnyKernel3.zip
@@ -48,7 +48,7 @@ Download the latest pre-compiled files from the [GitHub Releases](https://github
 
 ---
 
-### Method 2: Flash via `samloader` (Linux / Mac)
+### Method 2: Flash via [`samloader`](https://github.com/topjohnwu/samloader-rs) (Linux / Mac)
 
 1. Put the phone into Download Mode:
    ```bash
@@ -65,7 +65,7 @@ Download the latest pre-compiled files from the [GitHub Releases](https://github
 ### Method 3: Flash via Odin (Windows)
 
 1. Put the phone into Download Mode.
-2. Launch **Odin3 v3.14.4**.
+2. Launch **[Odin3 v3.14.4](https://odindownload.com)**.
 3. Verify your phone appears under `ID:COM`.
 4. Click **AP** and select `boot-ksu.tar`.
 5. Click **Start**. Wait for the green `PASS!` text, and your phone will reboot.
@@ -78,7 +78,7 @@ Download the latest pre-compiled files from the [GitHub Releases](https://github
    ```bash
    adb install KernelSU_Next_v3.4.2.apk
    ```
-   *(Or download and install it directly using your phone's browser).*
+   *(Or [download `KernelSU_Next_v3.4.2.apk`](https://github.com/KernelSU-Next/KernelSU-Next/releases/download/v3.4.2/KernelSU_Next_v3.4.2.apk) and install it directly using your phone's browser).*
 2. Open the **KernelSU Next** app.
 3. You will see:
    - **Status:** `Working [BUILT-IN (GKI1)]`
