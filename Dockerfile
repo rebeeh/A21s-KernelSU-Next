@@ -55,7 +55,7 @@ RUN mkdir -p /workspace/tools && \
 RUN git clone -b lineage-24.0 --depth=1 https://github.com/samsungexynos850/android_kernel_samsung_exynos850.git /workspace/a21s-kernel && \
     cd /workspace/a21s-kernel && \
     git clone -b legacy --depth=1 https://github.com/KernelSU-Next/KernelSU-Next.git KernelSU-Next && \
-    ln -sf KernelSU-Next/kernel drivers/kernelsu
+    ln -sf ../KernelSU-Next/kernel drivers/kernelsu
 
 # 5. Copy patches and defconfig from repository context
 COPY patches/ /workspace/patches/
