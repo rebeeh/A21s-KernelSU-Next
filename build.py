@@ -6,13 +6,16 @@ No external Python dependencies required (standard library only).
 """
 
 import argparse
+import datetime
 import os
 import platform
 import shutil
 import subprocess
 import sys
 import tarfile
+import urllib.parse
 import urllib.request
+import webbrowser
 import zipfile
 from pathlib import Path
 
@@ -220,6 +223,91 @@ def cmd_docker_build(stock_boot: str = None):
     log("Container compilation completed! Artifacts generated in 'out/' folder.")
 
 
+def cmd_report_issue():
+    """Extracts diagnostic and crash logs from connected device via ADB and opens a pre-filled GitHub issue."""
+    log("Scanning for connected ADB device...")
+    try:
+        res = subprocess.run(["adb", "devices"], capture_output=True, text=True, check=True)
+    except FileNotFoundError:
+        err("`adb` command not found! Please install ADB (Android Platform Tools) or add it to PATH.")
+        sys.exit(1)
+
+    lines = [l.strip() for l in res.stdout.splitlines() if l.strip() and not l.startswith("*") and not l.startswith("List")]
+    if not lines:
+        err("No ADB device detected! Please connect your phone via USB with USB debugging enabled or in Recovery mode.")
+        sys.exit(1)
+
+    device_serial, device_state = lines[0].split()
+    log(f"Found connected device: {device_serial} [{device_state}]")
+
+    logs_dir = OUT_DIR / "logs"
+    logs_dir.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    report_file = logs_dir / f"issue_report_{timestamp}.log"
+
+    report_lines = []
+    report_lines.append(f"Device Serial: {device_serial}")
+    report_lines.append(f"Device State: {device_state}")
+    report_lines.append(f"Report Generated: {datetime.datetime.now().isoformat()}\n")
+
+    # 1. Ramoops crash log
+    log("Checking for preserved kernel crash log (pstore/ramoops)...")
+    ramoops = subprocess.run(["adb", "shell", "cat /sys/fs/pstore/dmesg-ramoops-0 2>/dev/null || true"], capture_output=True, text=True).stdout
+    if ramoops.strip():
+        report_lines.append("=" * 40 + " RAMOOPS KERNEL PANIC LOG " + "=" * 40)
+        report_lines.append(ramoops.strip() + "\n")
+        log("[✓] Captured persistent kernel panic log!")
+
+    # 2. Live dmesg
+    log("Capturing dmesg log...")
+    dmesg = subprocess.run(["adb", "shell", "dmesg 2>/dev/null | tail -n 120 || true"], capture_output=True, text=True).stdout
+    if dmesg.strip():
+        report_lines.append("=" * 40 + " LIVE DMESG (LAST 120 LINES) " + "=" * 40)
+        report_lines.append(dmesg.strip() + "\n")
+
+    # 3. KernelSU Next Info
+    log("Checking KernelSU Next status...")
+    ksu_info = subprocess.run(["adb", "shell", "/data/adb/ksud debug info 2>/dev/null || true"], capture_output=True, text=True).stdout
+    if ksu_info.strip():
+        report_lines.append("=" * 40 + " KSUD DEBUG INFO " + "=" * 40)
+        report_lines.append(ksu_info.strip() + "\n")
+
+    report_file.write_text("\n".join(report_lines))
+    log(f"[✓] Diagnostic report created at: {report_file}")
+
+    # GitHub issue prefill
+    snippet = ""
+    if ramoops.strip():
+        snippet = ramoops.strip()[-1200:]
+    elif dmesg.strip():
+        snippet = dmesg.strip()[-1200:]
+
+    issue_title = f"[Issue Report] Device {device_state} on SM-A217F"
+    issue_body = f"""### Device Information
+- **Device Model:** Samsung Galaxy A21s (`SM-A217F`)
+- **Connection Mode:** `{device_state}`
+- **ROM:** LineageOS 24.0 (Android 17)
+
+### Problem Description
+<!-- Describe your problem: bootloop, root not recognized, app crash, etc. -->
+
+### Kernel Diagnostic Summary
+```
+{snippet}
+```
+
+> 📎 **Full Log Saved:** `{report_file.name}` in your `out/logs/` directory. Please attach it to this issue!
+"""
+    query = urllib.parse.urlencode({
+        "title": issue_title,
+        "body": issue_body,
+        "labels": "bug"
+    })
+    issue_url = f"https://github.com/rebeeh/A21s-KernelSU-Next/issues/new?{query}"
+    log("[+] Opening pre-filled GitHub issue in your browser...")
+    webbrowser.open(issue_url)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="A21s KernelSU-Next Universal Cross-Platform Build System",
@@ -229,6 +317,7 @@ Examples:
   python build.py doctor                     # Check OS and installed build tools
   python build.py package                    # Package AnyKernel3 recovery zip portably
   python build.py make-tar                   # Create Odin boot-ksu.tar archive portably
+  python build.py report-issue               # Extract device crash logs & open pre-filled issue
   python build.py docker-build               # 1-click build via Docker (Windows / Mac / Linux)
   python build.py docker-build --stock-boot boot.img
         """
@@ -251,6 +340,9 @@ Examples:
     docker_parser = subparsers.add_parser("docker-build", help="Build kernel inside Docker container")
     docker_parser.add_argument("--stock-boot", help="Path to stock boot.img to repack", default=None)
 
+    # report-issue
+    subparsers.add_parser("report-issue", help="Extract crash/diagnostic logs via ADB and open pre-filled issue")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -265,6 +357,8 @@ Examples:
         cmd_make_tar(args.boot_img)
     elif args.command == "docker-build":
         cmd_docker_build(args.stock_boot)
+    elif args.command == "report-issue":
+        cmd_report_issue()
 
 
 if __name__ == "__main__":

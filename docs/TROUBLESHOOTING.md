@@ -4,11 +4,43 @@ This guide explains how to troubleshoot issues, extract critical kernel logs, an
 
 ---
 
-## 1. Extracting Logs
+## 1. Automated 1-Click Log Extraction & Issue Reporting
 
-When reporting any kernel crash, bootloop, or unexpected root behavior, **logs are mandatory**.
+When reporting any kernel crash, bootloop, or unexpected root behavior, **logs are mandatory**. We provide two automated workflows so you don't have to fiddle with manual shell commands:
 
-### A. Kernel Crash / Bootloop Log (`pstore / ramoops`)
+### Method A: 1-Click Desktop Reporter (`python build.py report-issue`)
+*(Recommended if connected to PC / in Recovery / during Bootloop)*
+
+Connect your device via USB (whether booted into Android, Recovery, or TWRP) and run:
+```bash
+python build.py report-issue
+```
+**What this does automatically:**
+1. Detects your connected device via ADB.
+2. Extracts preserved kernel panics (`/sys/fs/pstore/dmesg-ramoops-0`), live kernel messages (`dmesg`), Android framework logs (`logcat`), and KernelSU status (`ksud debug info`).
+3. Packages everything cleanly into a timestamped file: `out/logs/issue_report_<timestamp>.log`.
+4. Automatically opens your desktop browser to GitHub with a **pre-filled bug report** containing your device model, LineageOS version, and the fatal crash stack trace! All you need to do is drag-and-drop the generated log file.
+
+---
+
+### Method B: On-Device Boot Crash Popup Reporter
+*(Works directly on your phone after recovering from a bootloop or crash)*
+
+Our repository provides an autonomous service script: [`tools/crash_reporter/00_ksu_crash_reporter.sh`](../tools/crash_reporter/00_ksu_crash_reporter.sh).
+
+When installed to `/data/adb/service.d/00_ksu_crash_reporter.sh`:
+1. Whenever your phone boots, it checks if a kernel panic occurred on the prior boot (`/sys/fs/pstore/dmesg-ramoops-0`).
+2. If a crash is detected, it automatically copies the full crash dump to your user storage:
+   `/sdcard/Download/ksu_crash_<timestamp>.log`
+3. It pops up your default browser with a **pre-filled GitHub Issue draft** with the panic trace and tells you where the saved log is located!
+
+---
+
+### Method C: Manual Log Extraction via ADB
+
+If you prefer extracting files manually:
+
+#### A. Kernel Crash / Bootloop Log (`pstore / ramoops`)
 If your device crashes or bootloops, Linux automatically saves the panic log into persistent RAM (`pstore`).
 
 1. Boot your phone into **Recovery Mode** (hold `Volume Up` + `Power`).
@@ -20,19 +52,19 @@ If your device crashes or bootloops, Linux automatically saves the panic log int
    ```
 4. Attach `ramoops.log` to your issue.
 
-### B. Live Kernel Log (`dmesg`)
+#### B. Live Kernel Log (`dmesg`)
 If the phone boots but root or a specific module isn't functioning:
 ```bash
 adb shell dmesg > dmesg.log
 ```
 
-### C. Android System Log (`logcat`)
+#### C. Android System Log (`logcat`)
 To capture Android framework errors or app-level root rejection:
 ```bash
 adb logcat -d > logcat.log
 ```
 
-### D. KernelSU Userspace Daemon Log (`ksud`)
+#### D. KernelSU Userspace Daemon Log (`ksud`)
 To inspect the status of the `ksud` daemon and feature states:
 ```bash
 adb shell "/data/adb/ksud feature list" > ksu_features.log
