@@ -45,6 +45,7 @@ A21s-KernelSU-Next/
 ├── configs/
 │   └── a21s_ksu_defconfig         # Validated kernel configuration (KSU + Manual Hooks enabled)
 ├── docs/
+│   ├── README.md                  # Documentation navigation hub & repository index
 │   ├── ARCHITECTURE.md            # Hardware security, TZASC breakdown & technical design
 │   ├── CONTRIBUTING.md            # Community contribution & porting guidelines
 │   ├── FLASHING_GUIDE.md          # Flashing instructions via AnyKernel3, samloader, Odin, and Heimdall
@@ -112,6 +113,7 @@ For alternative methods (Odin / Heimdall / TWRP / AnyKernel3), read the [Flashin
 
 ## 📖 Documentation & Guides
 
+- 📚 [Documentation Hub & Index](docs/README.md)
 - 🧑‍💻 [End-User Installation & Root Guide (No compiling needed)](docs/USER_GUIDE.md)
 - 🔬 [In-Depth Technical Research & Engineering Report](docs/RESEARCH.md)
 - 🔄 [LineageOS OTA Updates & Kernel Lifecycle Guide](docs/OTA_AND_UPDATES.md)

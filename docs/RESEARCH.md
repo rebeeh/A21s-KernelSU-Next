@@ -123,3 +123,53 @@ static int can_umount(const struct path *path, int flags);
 int path_umount(struct path *path, int flags);
 ```
 This enables module mount hiding without kernel crashes.
+
+---
+
+## 6. Comparative Analysis of Exynos 850 Trees
+
+During research and development, multiple Exynos 850 kernel source trees were evaluated:
+
+### 1. `LineageOS/android_kernel_samsung_universal850` (Target Tree)
+- **URL:** [https://github.com/LineageOS/android_kernel_samsung_universal850](https://github.com/LineageOS/android_kernel_samsung_universal850)
+- **Branch:** `lineage-24.0` (Linux 4.19.325)
+- **Evaluation:** This is the official kernel tree actively maintained by LineageOS maintainers for Galaxy A21s on Android 15. It incorporates all upstream LineageOS kernel hardening, binder IPC fixes for Android 15, and camera/display driver patches specifically compiled for LineageOS userland.
+- **Decision:** Selected as our target kernel tree to ensure 100% binary driver compatibility with LineageOS 24 releases.
+
+### 2. `samsungexynos850/android_kernel_samsung_exynos850` (Community Unified Tree)
+- **URL:** [https://github.com/samsungexynos850/android_kernel_samsung_exynos850](https://github.com/samsungexynos850/android_kernel_samsung_exynos850)
+- **Evaluation:** Developed by the Exynos 850 developer community (Astrako, physwizz) to unify kernel support across multiple Samsung devices (A21s, A12s, A13, A04s) across OneUI 2.0 through OneUI 5.0 and GSI environments.
+- **Comparison:** While great for multi-ROM and OneUI porting, it carries generic patches that diverge from the clean LineageOS 24 binder/SELinux requirements. However, its DTS and battery charging patches provided valuable insights for TrustZone stability testing.
+
+---
+
+## 7. LineageOS Device Tree Alignment (`android_device_samsung_a21s`)
+
+- **URL:** [https://github.com/LineageOS/android_device_samsung_a21s](https://github.com/LineageOS/android_device_samsung_a21s)
+
+The device tree defines key board configurations that dictated our build and packaging pipeline:
+1. **Partition Geometry:**
+   - `BOARD_BOOTIMAGE_PARTITION_SIZE := 37748736` (exact 36 MiB limit). Boot images exceeding 36 MiB will fail partition verification or overwrite neighboring partitions.
+2. **Boot Header Specifications:**
+   - `BOARD_BOOT_HEADER_VERSION := 2`: Uses header version 2 with separate DTB and ramdisk sections.
+   - `BOARD_KERNEL_PAGESIZE := 2048`: Dictates page alignment during `magiskboot repack`.
+3. **Storage Partitioning:**
+   - Samsung Galaxy A21s is an **A-only** device (single system/boot slot; not A/B).
+   - Boot partition block path: `/dev/block/by-name/boot`.
+   - These parameters were directly mapped into `tools/anykernel3/anykernel.sh` (`block=/dev/block/by-name/boot; is_slot_device=0;`) to ensure recovery flashing works autonomously.
+
+---
+
+## 8. Build Workspace Hierarchy & Repository Separation
+
+### Why Separate the Build Workspace from the Git Repository?
+- The full Linux kernel source (`a21s-kernel`) and git history exceeds **2.5 GB**.
+- The Android Clang toolchain (`clang-r416183b`) is **1.5 GB**.
+- Storing these massive trees inside the GitHub repository would make cloning unbearably slow and violate GitHub repository size limits (recommended < 1 GB, hard limit 2 GB).
+
+### The Solution: Overlay Architecture
+- **Distribution Repository (`rebeeh/A21s-KernelSU-Next`):**
+  A lightweight (~1 MB) repository containing our reproducible patches (`patches/`), validated defconfig (`configs/a21s_ksu_defconfig`), AnyKernel3 packager, CI automation, and documentation.
+- **Local / CI Build Directory (`build/` or `~/Android/Kernel/`):**
+  An external workspace where the heavy upstream kernel and toolchain are cloned by `scripts/setup_env.sh` or GitHub Actions CI. The repository's patches and defconfig are applied on top of the upstream tree cleanly before compiling.
+
