@@ -1,65 +1,118 @@
-# Architecture & Technical Design: A21s KernelSU-Next
+# 🏗️ Architecture & Technical Design: A21s KernelSU-Next
 
-This document details the architectural decisions, hardware constraints, and kernel modifications required to run **KernelSU-Next** on the **Samsung Galaxy A21s (`SM-A217F`)** running **LineageOS 24 (Linux kernel 4.19.325)**.
-
----
-
-## 1. Hardware & Security Constraints: Samsung Exynos 850 (universal850)
-
-The Samsung Galaxy A21s is powered by the **Exynos 850** SoC (ARM Cortex-A55 octa-core, ARMv8.2-A).
-
-Samsung implements hardware-level TrustZone protections on the memory bus:
-- **TZASC (TrustZone Address Space Controller):** Constantly audits and enforces memory access permissions to DRAM segments assigned to the secure world vs the non-secure world.
-- **RKP (Real-time Kernel Protection) / DEFEX:** Monitored via EL3 TrustZone interrupts (`irq/160-tzasc`).
-
-### Why Dynamic Kprobes (`CONFIG_KSU_KPROBES_HOOK=y`) Fail
-Standard KernelSU installations on generic Android devices rely on **Kprobes**. Kprobes function by dynamically replacing CPU instruction opcodes in memory with breakpoint instructions (`BRK` / `AARCH64_BREAK_MON`) or patching jump instructions at runtime.
-
-On the Exynos 850:
-1. When `CONFIG_KSU_KPROBES_HOOK=y` registers a probe on `sys_execve` or `vfs_read`, it calls `patch_text()` to modify executable kernel pages in RAM.
-2. The hardware TZASC immediately traps this write as an unauthorized modification of kernel code space:
-   ```
-   [ 1.196687] [0: irq/160-tzasc: 69] irq-160 : 1 tzasc
-   ```
-3. The Exynos security monitor halts CPU execution and triggers an unrecoverable kernel panic, resulting in an immediate bootloop.
+> **TL;DR:** KernelSU-Next cannot use dynamic kprobes on the Samsung Galaxy A21s because Samsung's hardware security (TZASC/RKP) immediately panics the kernel when executable pages are patched at runtime — so we use compile-time manual hooks instead, carefully backport missing kernel symbols, and pin the UAPI version to stay compatible with the stable Manager app.
 
 ---
 
-## 2. The Solution: Compile-Time Scope-Minimized Manual Hooks
+## 🗺️ Jump to What You Need
 
-To completely eliminate dynamic instruction patching, we configure the kernel with:
+| I want to understand… | Go to |
+|---|---|
+| Why kprobes crash this device | [§1 Hardware & Security Constraints](#1️⃣-hardware--security-constraints-samsung-exynos-850) |
+| How the manual hook solution works | [§2 Compile-Time Manual Hooks](#2️⃣-the-solution-compile-time-manual-hooks) |
+| The five hooked syscall sites | [Hook Call Sites Table](#the-5-manual-hook-call-sites) |
+| Manager app / UAPI versioning | [§3 UAPI Versioning & Manager Parity](#3️⃣-uapi-versioning--manager-parity) |
+| Kernel backports and host fixes | [§4 Backports & Host Fixes](#4️⃣-backports--host-fixes) |
+
+---
+
+## 📋 Executive Summary
+
+This document is a technical deep-dive for kernel developers and advanced Android users. It explains three layered problems that had to be solved to get KernelSU-Next running on the **Samsung Galaxy A21s (SM-A217F)** with **LineageOS 24 (Linux kernel 4.19.325)**:
+
+1. **Hardware security blocks dynamic patching.** Samsung's Exynos 850 ships with TZASC and RKP — hardware enforced memory guards running at EL3 — that trigger an instant, unrecoverable kernel panic the moment standard KernelSU tries to insert a kprobe. The fix is to disable kprobes entirely and use compile-time hook call-sites instead.
+
+2. **UAPI versioning must be pinned.** The upstream KernelSU-Next `origin/legacy` branch recently bumped its kernel–userspace API version to 6, which is incompatible with the last stable Manager release (v3.4.2, UAPI 5). We pin the constant at 5 to keep the Manager fully functional.
+
+3. **Backports are needed for a 4.19 non-GKI kernel.** Linux 4.19 is missing `path_umount`, Samsung's tree collides with KernelSU macros, and modern host toolchains (OpenSSL 3.x) break the build scripts — all patched in-tree.
+
+---
+
+## 1️⃣ Hardware & Security Constraints: Samsung Exynos 850
+
+The Galaxy A21s is powered by the **Exynos 850** SoC (ARM Cortex-A55 octa-core, **ARMv8.2-A**).
+
+Samsung layers two hardware-enforced security mechanisms on top of the standard kernel:
+
+| Mechanism | Full Name | What It Does |
+|---|---|---|
+| **TZASC** | TrustZone Address Space Controller | Continuously audits memory-bus transactions; enforces read/write/execute permissions between the secure world (EL3) and the non-secure world (EL0–EL2). |
+| **RKP / DEFEX** | Real-time Kernel Protection | Monitors kernel integrity via EL3 TrustZone interrupts (`irq/160-tzasc`); raises a fatal exception on unauthorized kernel code modification. |
+
+---
+
+## 2️⃣ The Solution: Compile-Time Manual Hooks
+
+### Why Dynamic Kprobes Fail — and How Manual Hooks Solve It
+
+The diagram below shows the two code paths side by side:
+
+```mermaid
+flowchart TD
+    subgraph KPROBES["❌ Kprobes Path (CONFIG_KSU_KPROBES_HOOK=y)"]
+        direction TB
+        A["KernelSU registers probe\non sys_execve / vfs_read"] --> B["Calls patch_text() to write\nBRK opcode into kernel .text"]
+        B --> C["TZASC detects unauthorized\nwrite to executable kernel pages"]
+        C --> D["EL3 security monitor\nhalts CPU execution"]
+        D --> E["💥 Unrecoverable kernel panic\n→ bootloop"]
+    end
+
+    subgraph MANUAL["✅ Manual Hook Path (CONFIG_KSU_MANUAL_HOOK=y)"]
+        direction TB
+        F["Clang resolves hook call-sites\nat compile time"] --> G["Kernel .text contains normal\nBL branch instructions"]
+        G --> H["CPU executes BL — no memory\npatching at runtime"]
+        H --> I["TZASC sees only ordinary\ninstruction fetches"]
+        I --> J["✅ Boot succeeds, hooks active"]
+    end
+
+    KPROBES -.->|"Replace with"| MANUAL
+```
+
+### Kernel Configuration
+
+To completely eliminate dynamic instruction patching, configure the kernel with:
+
 ```kconfig
 CONFIG_KSU=y
 CONFIG_KSU_MANUAL_HOOK=y
 # CONFIG_KSU_KPROBES_HOOK is not set
 ```
 
-In Manual Hook mode, all hook call-sites are resolved statically at compile time by Clang. The CPU executes normal, unmodified branch instructions (`BL`), which never triggers TZASC.
+In **Manual Hook** mode, all hook call-sites are resolved statically at compile time by Clang. The CPU executes normal, unmodified branch instructions (`BL`), which never triggers TZASC.
 
 ### The 5 Manual Hook Call Sites
 
-| Function | File | Lineage Hook Placement | Upstream Purpose |
+Each hook is a `static inline` call inserted directly into the kernel source file at the point shown below:
+
+| Function | File | Hook Placement | Purpose |
 |---|---|---|---|
-| `do_execve` | `fs/exec.c` | Before process credentials commit | Intercepts `su` requests and swaps process context to root (`ksu` domain). |
+| `do_execve` | `fs/exec.c` | Before process credentials commit | Intercepts `su` requests and swaps the process context to root (`ksu` domain). |
 | `faccessat` | `fs/open.c` | Before permission check | Intercepts `access("/system/bin/su")` checks from root-seeking apps and redirects to `/system/bin/sh`. |
-| `read` | `fs/read_write.c` | In `SYSCALL_DEFINE3(read)` | Intercepts file reads for safety and allowlist lookups. |
+| `read` | `fs/read_write.c` | In `SYSCALL_DEFINE3(read)` | Intercepts file reads for safety checks and allowlist lookups. |
 | `newfstatat` | `fs/stat.c` | In `SYSCALL_DEFINE4(newfstatat)` | Returns stat info for `/system/bin/su` when requested by authorized apps. |
 | `reboot` | `kernel/reboot.c` | In `SYSCALL_DEFINE4(reboot)` | Intercepts reboot supercall magics to install driver file descriptors. |
 
+> [!NOTE]
+> None of these hooks modify kernel `.text` at runtime. They are ordinary function calls baked into the binary by the compiler. TZASC never sees a suspicious write.
+
 ---
 
-## 3. UAPI Versioning & Manager Parity
+## 3️⃣ UAPI Versioning & Manager Parity
 
-KernelSU-Next maintains an explicit UAPI (User-Kernel API) version counter in `uapi/supercall.h`.
+KernelSU-Next maintains an explicit **UAPI (User-Kernel API) version counter** in `uapi/supercall.h`. This integer must match between the running kernel driver and the Manager app — a mismatch causes the Manager to show a warning and disables advanced features.
 
 ### The Version Check Mechanism
+
 When the Manager app (`com.rifsxd.ksunext`) launches, it calls the `KSU_IOCTL_GET_INFO` supercall to query the running driver:
+
 ```kotlin
 // manager/app/src/main/java/com/rifsxd/ksunext/Natives.kt
 fun isFullFeatured(): Boolean {
     return isManager && kernelUAPIVersion == managerUAPIVersion && rootAvailable()
 }
 ```
+
+If the kernel's UAPI version is *newer* than what the Manager was built with, the Manager shows a banner asking the user to update:
 
 ```kotlin
 // manager/app/src/main/java/com/rifsxd/ksunext/ui/screen/Home.kt
@@ -70,17 +123,53 @@ if (requiresNewManager) {
 ```
 
 ### Protocol Alignment
-- **KernelSU-Next Manager `v3.4.2`** (the latest official stable release) was built with **UAPI 5**.
-- The `origin/legacy` git HEAD recently bumped the constant to **UAPI 6** for experimental preinit/symbol lookups (unsupported on non-GKI 4.19).
-- Maintaining `#define KERNEL_SU_UAPI_VERSION 5` guarantees seamless compatibility with stable Manager `v3.4.2` and its embedded `ksud 3.4.2 (uapi: 5)`.
+
+| Component | UAPI Version | Notes |
+|---|---|---|
+| **KernelSU-Next Manager v3.4.2** (latest stable) | **5** | The release to install on the A21s. |
+| `origin/legacy` git HEAD | **6** | Experimental preinit/symbol lookups — **not supported** on non-GKI 4.19. |
+| **This kernel build** | **5** (pinned) | `#define KERNEL_SU_UAPI_VERSION 5` in `uapi/supercall.h`. |
+
+> [!IMPORTANT]
+> Do **not** bump `KERNEL_SU_UAPI_VERSION` to 6. The UAPI 6 feature set depends on GKI symbol exports unavailable in the Samsung 4.19 tree. Pinning at 5 guarantees seamless compatibility with Manager v3.4.2 and its embedded `ksud 3.4.2 (uapi: 5)`.
 
 ---
 
-## 4. Backports & Host Fixes
+## 4️⃣ Backports & Host Fixes
 
-1. **`path_umount` Backport (`fs/namespace.c`):**
-   Linux 4.19 lacks `path_umount`, which KernelSU uses to cleanly unmount module overlays for unauthorized apps. We backported `can_umount()` and `path_umount()` into `fs/namespace.c`.
-2. **OpenSSL 3.x Host Compatibility (`scripts/`):**
-   Modern host build systems (Fedora 40+, Ubuntu 22.04+) ship OpenSSL 3.0+, which deprecates `<openssl/engine.h>`. Added preprocessor checks in `scripts/extract-cert.c` and `scripts/sign-file.c` to conditionally bypass deprecated engine headers.
-3. **`copy_to_kernel_nofault` Fix (`drivers/kernelsu/hook/patch_memory.c`):**
-   Samsung backported `copy_to_kernel_nofault` into their 4.19 kernel branch, causing a macro collision with KernelSU's legacy fallback. Cleanly resolved by removing the duplicate macro.
+Three in-tree patches are required to compile and run KernelSU-Next on this 4.19 non-GKI tree:
+
+### 1. `path_umount` Backport (`fs/namespace.c`)
+
+Linux 4.19 does not ship `path_umount`, which KernelSU uses to cleanly unmount module overlays for unauthorized apps.
+
+**Fix:** `can_umount()` and `path_umount()` were backported directly into `fs/namespace.c`.
+
+### 2. OpenSSL 3.x Host Compatibility (`scripts/`)
+
+Modern host build systems (Fedora 40+, Ubuntu 22.04+) ship **OpenSSL 3.0+**, which deprecates `<openssl/engine.h>`. The kernel build scripts `extract-cert.c` and `sign-file.c` include this header unconditionally, breaking the host build.
+
+**Fix:** Preprocessor guards were added to both files to conditionally bypass the deprecated engine headers when building against OpenSSL 3.x.
+
+> [!TIP]
+> If you see `fatal error: openssl/engine.h: No such file or directory` during host compilation, this fix is what you need. It is already applied in this tree.
+
+### 3. `copy_to_kernel_nofault` Macro Collision (`drivers/kernelsu/hook/patch_memory.c`)
+
+Samsung backported `copy_to_kernel_nofault` into their 4.19 kernel branch. KernelSU's legacy fallback defines the same macro, causing a compiler error on duplicate definitions.
+
+**Fix:** The duplicate macro definition was removed from `drivers/kernelsu/hook/patch_memory.c`.
+
+> [!WARNING]
+> If you rebase onto a newer upstream KernelSU-Next commit, check whether this file reintroduces the macro — it will cause a build failure unique to Samsung 4.19 trees.
+
+---
+
+## 🔗 Related Docs
+
+| Document | Description |
+|---|---|
+| [BUILD.md](BUILD.md) | Step-by-step build instructions, toolchain setup, and `make` invocations. |
+| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Common build and boot errors, with fixes. |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to submit patches, branch strategy, and coding style. |
+| [README.md](../README.md) | Project overview, feature list, and quick-start for end users. |
