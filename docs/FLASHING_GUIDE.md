@@ -53,7 +53,7 @@ This guide provides tested instructions for flashing the KernelSU-Next custom ke
 
 ---
 
-## Method 4: Using Heimdall on Linux
+## Method 4: Using Heimdall on macOS & Linux
 
 1. Boot device into Download Mode.
 2. Verify device detection:

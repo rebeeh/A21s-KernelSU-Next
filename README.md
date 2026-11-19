@@ -67,32 +67,53 @@ A21s-KernelSU-Next/
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Cross-Platform Build & Flashing System
 
-### 1. Setup Environment & Dependencies
+This project is designed from scratch to be **100% platform-independent**. You can build and flash whether you are on **Windows**, **macOS**, or **Linux**, or even without a PC directly on your device.
+
+### Method A: Universal Python CLI (Windows / macOS / Linux)
+No external dependencies required:
 ```bash
-git clone https://github.com/rebeeh/A21s-KernelSU-Next.git
-cd A21s-KernelSU-Next
-./scripts/setup_env.sh
+# 1. Check your host environment
+python3 build.py doctor
+
+# 2. Package AnyKernel3 recovery zip portably
+python3 build.py package
+
+# 3. Create Odin boot-ksu.tar portably
+python3 build.py make-tar
+
+# 4. 1-Click build inside standardized Docker container
+python3 build.py docker-build
 ```
 
-### 2. Compile & Package Boot Image
+### Method B: Universal Docker / Compose (Windows / macOS / Linux)
+Guarantees a byte-for-byte identical build on any operating system:
 ```bash
-# Pass stock boot.img or place boot.img in the project folder
+# Place your stock boot.img in the repository root and run:
+docker compose up --build
+```
+Artifacts are automatically placed in the `out/` directory.
+
+### Method C: Cloud Builder (Zero Local Setup)
+Trigger the automated build directly from your browser via **[GitHub Actions](https://github.com/rebeeh/A21s-KernelSU-Next/actions/workflows/build-kernel.yml)** (`Run workflow`). Download the prebuilt zip, img, and tar archives in seconds.
+
+### Method D: Native Linux / WSL2
+```bash
+./scripts/setup_env.sh
 ./scripts/build.sh boot.img
 ```
-The script will output:
-- `out/boot-ksu.img` (Flashable via recovery or fastboot/samloader)
-- `out/boot-ksu.tar` (Odin-flashable AP tarball)
-- `out/KernelSU-Next-A21s-universal850-AnyKernel3.zip` (Recovery flashable)
 
-### 3. Flash to Device (via `samloader`)
-```bash
-adb reboot download
-samloader flash --partition BOOT out/boot-ksu.img
-```
+---
 
-For alternative methods (Odin / Heimdall / TWRP / AnyKernel3), read the [Flashing Guide](docs/FLASHING_GUIDE.md).
+## ⚡ Cross-Platform Flashing Options
+
+| Platform | Recommended Flashing Tool | Target File |
+| :--- | :--- | :--- |
+| **Any OS / No PC** | **LineageOS Recovery / TWRP** | `KernelSU-Next-A21s-universal850-AnyKernel3.zip` |
+| **Windows** | **Samsung Odin3 v3.14+** (Slot: AP) | `out/boot-ksu.tar` |
+| **Linux** | **`samloader`** (`samloader flash --partition BOOT out/boot-ksu.img`) | `out/boot-ksu.img` |
+| **macOS / Linux** | **`heimdall`** (`heimdall flash --BOOT out/boot-ksu.img`) | `out/boot-ksu.img` |
 
 ---
 

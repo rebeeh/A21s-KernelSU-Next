@@ -1,0 +1,12 @@
+services:
+  builder:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: a21s-ksu-builder:latest
+    container_name: a21s-ksu-builder
+    volumes:
+      - ./out:/workspace/out
+      - ./boot.img:/workspace/boot.img:ro
+    environment:
+      - STOCK_BOOT=/workspace/boot.img

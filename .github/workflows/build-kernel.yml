@@ -6,10 +6,17 @@ on:
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
+    inputs:
+      stock_boot_url:
+        description: "Optional URL to stock boot.img (to repack boot-ksu.img & Odin boot-ksu.tar)"
+        required: false
+        default: ""
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    name: Build Kernel & AnyKernel3
+    runs-on: ubuntu-22.04
+
     steps:
       - name: Checkout Project Repository
         uses: actions/checkout@v4
@@ -17,9 +24,9 @@ jobs:
       - name: Install Build Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y bc bison build-essential ccache curl flex g++-multilib \
-            gcc-multilib gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu git gnupg gperf \
-            libelf-dev libssl-dev lz4 libncurses5-dev pkg-config python3 rsync unzip zip zlib1g-dev
+          sudo apt-get install -y bc bison build-essential ccache curl flex git gnupg gperf \
+            libelf-dev libssl-dev lz4 libncurses5-dev pkg-config python3 python3-pip rsync \
+            unzip zip zlib1g-dev gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
 
       - name: Clone Clang Toolchain (clang-r416183b)
         run: |
@@ -60,14 +67,31 @@ jobs:
           mkdir -p out
           KERNEL_IMAGE="$(pwd)/a21s-kernel/arch/arm64/boot/Image" bash scripts/package_anykernel3.sh
 
+      - name: Repack Boot Image & Odin Tar (If stock boot provided)
+        if: "${{ github.event.inputs.stock_boot_url != '' }}"
+        run: |
+          curl -sL "${{ github.event.inputs.stock_boot_url }}" -o boot.img
+          curl -sL "https://github.com/magiskboot-x86_64/magiskboot/releases/latest/download/magiskboot" -o magiskboot
+          chmod +x magiskboot
+          mkdir -p repack out
+          cd repack
+          ../magiskboot unpack ../boot.img
+          cp ../a21s-kernel/arch/arm64/boot/Image ./kernel
+          ../magiskboot repack ../boot.img ../out/boot-ksu.img
+          cd ../out
+          tar -cvf boot-ksu.tar boot-ksu.img
+
       - name: Upload Kernel Image Artifact
         uses: actions/upload-artifact@v4
         with:
           name: a21s-ksu-kernel-Image
           path: a21s-kernel/arch/arm64/boot/Image
 
-      - name: Upload AnyKernel3 Flashable Zip
+      - name: Upload Flashable Artifacts (AnyKernel3 / Boot Images)
         uses: actions/upload-artifact@v4
         with:
-          name: a21s-ksu-anykernel3-zip
-          path: out/*.zip
+          name: a21s-ksu-release-artifacts
+          path: |
+            out/*.zip
+            out/*.img
+            out/*.tar
