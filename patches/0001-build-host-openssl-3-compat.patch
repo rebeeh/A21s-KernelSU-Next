@@ -1,60 +1,68 @@
 diff --git a/scripts/extract-cert.c b/scripts/extract-cert.c
-index 2816fe72..352ca8cf 100644
+index 68f73787d761..7eb4cd09e4cc 100644
 --- a/scripts/extract-cert.c
 +++ b/scripts/extract-cert.c
-@@ -21,7 +21,10 @@
+@@ -18,10 +18,16 @@
+ #include <stdbool.h>
+ #include <string.h>
+ #include <err.h>
++#include <openssl/opensslv.h>
  #include <openssl/bio.h>
  #include <openssl/pem.h>
  #include <openssl/err.h>
-+#include <openssl/opensslv.h>
++#ifndef OPENSSL_NO_ENGINE
 +#if OPENSSL_VERSION_NUMBER < 0x30000000L
++#define USE_ENGINE
  #include <openssl/engine.h>
++#endif
 +#endif
  
  /*
-  * Report an error to stderr and exit.
-@@ -53,10 +56,13 @@ int main(int argc, char **argv)
- {
- 	char *cert_src;
- 	BUILD_BUG_ON(sizeof(system_extra_cert) == 0);
--
-+#if OPENSSL_VERSION_NUMBER < 0x30000000L
- 	OpenSSL_add_all_algorithms();
- 	ERR_load_crypto_strings();
--	ERR_clear_error();
-+#else
-+	OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS | OPENSSL_INIT_ADD_ALL_DIGESTS | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
-+#endif
-+ 	ERR_clear_error();
- 
- 	kbuild_verbose = getenv("KBUILD_VERBOSE") != NULL;
- 
+  * OpenSSL 3.0 deprecates the OpenSSL's ENGINE API.
+@@ -121,8 +127,8 @@ int main(int argc, char **argv)
+ 		fclose(f);
+ 		exit(0);
+ 	} else if (!strncmp(cert_src, "pkcs11:", 7)) {
+-#ifdef OPENSSL_IS_BORINGSSL
+-		ERR(1, "BoringSSL does not support extracting from PKCS#11");
++#if defined(OPENSSL_IS_BORINGSSL) || !defined(USE_ENGINE)
++		ERR(1, "OpenSSL 3+ / BoringSSL does not support extracting from PKCS#11");
+ 		exit(1);
+ #else
+ 		ENGINE *e;
 diff --git a/scripts/sign-file.c b/scripts/sign-file.c
-index 8e45e7f2..6e59aa16 100644
+index 12acc70e5a7a..6c3a740d71b5 100644
 --- a/scripts/sign-file.c
 +++ b/scripts/sign-file.c
-@@ -38,7 +38,10 @@
+@@ -27,7 +27,12 @@
+ #include <openssl/evp.h>
+ #include <openssl/pem.h>
  #include <openssl/err.h>
- #include <openssl/default.h>
- #endif
-+#include <openssl/opensslv.h>
++#ifndef OPENSSL_NO_ENGINE
 +#if OPENSSL_VERSION_NUMBER < 0x30000000L
++#define USE_ENGINE
  #include <openssl/engine.h>
++#endif
 +#endif
  
  /*
-  * Report an error to stderr and exit.
-@@ -217,9 +220,16 @@ int main(int argc, char **argv)
- 	key_pass = getenv("KBUILD_SIGN_PIN");
+  * OpenSSL 3.0 deprecates the OpenSSL's ENGINE API.
+@@ -144,6 +149,10 @@ static EVP_PKEY *read_private_key(const char *private_key_name)
+ 	EVP_PKEY *private_key;
  
- #ifndef USE_PKCS11
-+#if OPENSSL_VERSION_NUMBER < 0x30000000L
- 	OpenSSL_add_all_algorithms();
- 	ERR_load_crypto_strings();
- 	ERR_clear_error();
+ 	if (!strncmp(private_key_name, "pkcs11:", 7)) {
++#ifndef USE_ENGINE
++		ERR(1, "OpenSSL 3+ does not support PKCS#11 engine");
++		exit(1);
 +#else
-+	OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS | OPENSSL_INIT_ADD_ALL_DIGESTS | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
-+	ERR_clear_error();
+ 		ENGINE *e;
+ 
+ 		ENGINE_load_builtin_engines();
+@@ -160,6 +169,7 @@ static EVP_PKEY *read_private_key(const char *private_key_name)
+ 		private_key = ENGINE_load_private_key(e, private_key_name,
+ 						      NULL, NULL);
+ 		ERR(!private_key, "%s", private_key_name);
 +#endif
- #else
- 	ENGINE *e = NULL;
+ 	} else {
+ 		BIO *b;
+ 
