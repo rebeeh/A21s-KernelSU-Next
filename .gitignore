@@ -60,3 +60,21 @@ arch/arm64/boot/dts/**/*.dtb
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Python Bytecode & Environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# PIT & Samsung Firmware Partitions
+*.pit
+
+# Diagnostic Logs & Crash Dumps
+*.pstore
+*.patch
+*.diff
