@@ -1,0 +1,74 @@
+name: Build A21s KernelSU-Next
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout Project Repository
+        uses: actions/checkout@v4
+
+      - name: Install Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bc bison build-essential ccache curl flex g++-multilib \
+            gcc-multilib git gnupg gperf libelf-dev libssl-dev lz4 libncurses5-dev \
+            pkg-config python3 rsync unzip zip zlib1g-dev
+
+      - name: Clone Clang Toolchain (clang-r416183b)
+        run: |
+          mkdir -p toolchain
+          git clone --depth=1 https://gitlab.com/rebeeh/clang-r416183b.git toolchain/clang-r416183b || \
+          git clone --depth=1 https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/clang-r416183b toolchain/clang-r416183b
+
+      - name: Clone Kernel Source & KernelSU-Next
+        run: |
+          git clone -b lineage-24.0 --depth=1 https://github.com/LineageOS/android_kernel_samsung_universal850.git a21s-kernel
+          cd a21s-kernel
+          git clone -b legacy --depth=1 https://github.com/KernelSU-Next/KernelSU-Next.git KernelSU-Next
+          ln -sf KernelSU-Next/kernel drivers/kernelsu
+
+      - name: Apply Kernel & KSU Patches
+        run: |
+          cd a21s-kernel
+          git apply ../patches/0001-build-host-openssl-3-compat.patch
+          git apply ../patches/0002-kernelsu-manual-hooks-and-backports.patch
+          cd KernelSU-Next
+          git apply ../../patches/0003-kernelsu-next-samsung-fixes.patch
+
+      - name: Configure Kernel
+        run: |
+          cp configs/a21s_ksu_defconfig a21s-kernel/.config
+
+      - name: Build Kernel Image
+        run: |
+          export PATH="$(pwd)/toolchain/clang-r416183b/bin:${PATH}"
+          export ARCH=arm64
+          export LLVM=1
+          export LLVM_IAS=1
+          export CROSS_COMPILE=aarch64-linux-gnu-
+          cd a21s-kernel
+          make -j$(nproc) Image
+
+      - name: Package AnyKernel3 Zip
+        run: |
+          mkdir -p out
+          bash scripts/package_anykernel3.sh
+
+      - name: Upload Kernel Image Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: a21s-ksu-kernel-Image
+          path: a21s-kernel/arch/arm64/boot/Image
+
+      - name: Upload AnyKernel3 Flashable Zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: a21s-ksu-anykernel3-zip
+          path: out/*.zip

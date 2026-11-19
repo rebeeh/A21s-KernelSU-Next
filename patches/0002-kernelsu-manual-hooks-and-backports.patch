@@ -1,0 +1,187 @@
+diff --git a/drivers/Kconfig b/drivers/Kconfig
+index 51ecb684..00fae0fc 100644
+--- a/drivers/Kconfig
++++ b/drivers/Kconfig
+@@ -226,4 +226,5 @@ source "drivers/sensorhub/Kconfig"
+ 
+ source "drivers/uh/Kconfig"
+ 
++source "drivers/kernelsu/Kconfig"
+ endmenu
+diff --git a/drivers/Makefile b/drivers/Makefile
+index 287b415a..6183e449 100644
+--- a/drivers/Makefile
++++ b/drivers/Makefile
+@@ -190,3 +190,5 @@ obj-$(CONFIG_TEE)		+= tee/
+ obj-$(CONFIG_SI_FS_NOTIFY)	+= si_fs_notify/
+ 
+ obj-$(CONFIG_UH)		+= uh/
++
++obj-$(CONFIG_KSU) += kernelsu/
+diff --git a/fs/exec.c b/fs/exec.c
+index c870a48a..c41551be 100644
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -1899,11 +1899,23 @@ static int __do_execve_file(int fd, struct filename *filename,
+ 	return retval;
+ }
+ 
++#ifdef CONFIG_KSU_MANUAL_HOOK
++extern int ksu_handle_execveat(int *fd, struct filename **filename_ptr, void *argv,
++			void *envp, int *flags);
++#endif
++
+ static int do_execve(struct filename *filename,
+ 	const char __user *const __user *__argv,
+ 	const char __user *const __user *__envp)
+ {
+ 	struct user_arg_ptr argv = { .ptr.native = __argv };
+ 	struct user_arg_ptr envp = { .ptr.native = __envp };
++#ifdef CONFIG_KSU_MANUAL_HOOK
++	int fd = AT_FDCWD;
++	int flags = 0;
++	ksu_handle_execveat(&fd, &filename, &argv, &envp, &flags);
++#endif
+ 	return do_execveat_common(AT_FDCWD, filename, argv, envp, 0);
+ }
+ 
+@@ -1934,6 +1946,12 @@ static int compat_do_execve(struct filename *filename,
+ 	const compat_uptr_t __user *__envp)
+ {
+ 	struct user_arg_ptr argv = { .ptr.compat = __argv, .is_compat = true };
+ 	struct user_arg_ptr envp = { .ptr.compat = __envp, .is_compat = true };
++#ifdef CONFIG_KSU_MANUAL_HOOK
++	int fd = AT_FDCWD;
++	int flags = 0;
++	ksu_handle_execveat(&fd, &filename, &argv, &envp, &flags);
++#endif
+ 	return do_execveat_common(AT_FDCWD, filename, argv, envp, 0);
+ }
+ 
+diff --git a/fs/namespace.c b/fs/namespace.c
+index ef4ed67c..3fea7468 100644
+--- a/fs/namespace.c
++++ b/fs/namespace.c
+@@ -1822,6 +1822,36 @@ SYSCALL_DEFINE1(oldumount, char __user *, name)
+ 
+ #endif
+ 
++static int can_umount(const struct path *path, int flags)
++ {
++	 struct mount *mnt = real_mount(path->mnt);
++	 if (flags & ~(MNT_FORCE | MNT_DETACH | MNT_EXPIRE | UMOUNT_NOFOLLOW))
++		 return -EINVAL;
++	 if (!may_mount())
++		 return -EPERM;
++	 if (path->dentry != path->mnt->mnt_root)
++		 return -EINVAL;
++	 if (!check_mnt(mnt))
++		 return -EINVAL;
++	 if (mnt->mnt.mnt_flags & MNT_LOCKED)
++		 return -EINVAL;
++	 if (flags & MNT_FORCE && !capable(CAP_SYS_ADMIN))
++		 return -EPERM;
++	 return 0;
++ }
++
++int path_umount(struct path *path, int flags)
++ {
++	 struct mount *mnt = real_mount(path->mnt);
++	 int ret;
++	 ret = can_umount(path, flags);
++	 if (!ret)
++		 ret = do_umount(mnt, flags);
++	 dput(path->dentry);
++	 mntput_no_expire(mnt);
++	 return ret;
++ }
++
+ static bool is_mnt_ns_file(struct dentry *dentry)
+ {
+ 	/* Is this a proxy for a mount namespace? */
+diff --git a/fs/open.c b/fs/open.c
+index a352ca45..d47192a5 100644
+--- a/fs/open.c
++++ b/fs/open.c
+@@ -406,6 +406,11 @@ long do_faccessat(int dfd, const char __user *filename, int mode)
+ 	return res;
+ }
+ 
++#ifdef CONFIG_KSU_MANUAL_HOOK
++extern int ksu_handle_faccessat(int *dfd, const char __user **filename_user, int *mode,
++			int *flags);
++#endif
++
+ SYSCALL_DEFINE3(faccessat, int, dfd, const char __user *, filename, int, mode)
+ {
++#ifdef CONFIG_KSU_MANUAL_HOOK
++	ksu_handle_faccessat(&dfd, &filename, &mode, NULL);
++#endif
+ 	return do_faccessat(dfd, filename, mode);
+ }
+ 
+diff --git a/fs/read_write.c b/fs/read_write.c
+index 2eecf1dc..a1c43553 100644
+--- a/fs/read_write.c
++++ b/fs/read_write.c
+@@ -588,6 +588,11 @@ ssize_t ksys_read(unsigned int fd, char __user *buf, size_t count)
+ 	return ret;
+ }
+ 
++#ifdef CONFIG_KSU_MANUAL_HOOK
++extern int ksu_handle_sys_read(unsigned int fd, char __user **buf_ptr,
++			size_t *count_ptr);
++#endif
++
+ SYSCALL_DEFINE3(read, unsigned int, fd, char __user *, buf, size_t, count)
+ {
++#ifdef CONFIG_KSU_MANUAL_HOOK
++	ksu_handle_sys_read(fd, &buf, &count);
++#endif
+ 	return ksys_read(fd, buf, count);
+ }
+ 
+diff --git a/fs/stat.c b/fs/stat.c
+index 2c9e6bb0..620f4c34 100644
+--- a/fs/stat.c
++++ b/fs/stat.c
+@@ -356,6 +356,11 @@ SYSCALL_DEFINE4(fstatat64, int, dfd, const char __user *, filename,
+ }
+ #endif /* __ARCH_WANT_STAT64 || __ARCH_WANT_COMPAT_STAT64 */
+ 
++#ifdef CONFIG_KSU_MANUAL_HOOK
++extern int ksu_handle_stat(int *dfd, const char __user **filename_user, int *flags);
++#endif
++
+ SYSCALL_DEFINE4(newfstatat, int, dfd, const char __user *, filename,
+ 		struct stat __user *, statbuf, int, flag)
+ {
+ 	struct kstat stat;
+ 	int error;
++#ifdef CONFIG_KSU_MANUAL_HOOK
++	ksu_handle_stat(&dfd, &filename, &flag);
++#endif
+ 
+ 	error = vfs_fstatat(dfd, filename, &stat, flag);
+ 	if (error)
+diff --git a/kernel/reboot.c b/kernel/reboot.c
+index cd2a567d..9c8a8166 100644
+--- a/kernel/reboot.c
++++ b/kernel/reboot.c
+@@ -293,6 +293,11 @@ static DEFINE_MUTEX(reboot_mutex);
+  *
+  * reboot doesn't sync: do that yourself before calling this.
+  */
++#ifdef CONFIG_KSU_MANUAL_HOOK
++extern int ksu_handle_sys_reboot(int magic1, int magic2, unsigned int cmd, void __user **arg);
++#endif
++
+ SYSCALL_DEFINE4(reboot, int, magic1, int, magic2, unsigned int, cmd,
+ 		void __user *, arg)
+ {
+ 	struct pid_namespace *pid_ns = task_active_pid_ns(current);
+ 	char buffer[256];
+ 	int ret = 0;
++#ifdef CONFIG_KSU_MANUAL_HOOK
++	ksu_handle_sys_reboot(magic1, magic2, cmd, &arg);
++#endif

@@ -1,0 +1,32 @@
+diff --git a/kernel/hook/patch_memory.c b/kernel/hook/patch_memory.c
+index d9e40ccf..5577d842 100644
+--- a/kernel/hook/patch_memory.c
++++ b/kernel/hook/patch_memory.c
+@@ -7,13 +7,7 @@
+ 
+ #include "patch_memory.h"
+ #include <linux/version.h>
+-
+-// copy_to_kernel_nofault() was introduced in 5.8; before that it was
+-// named probe_kernel_write()
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 8, 0)
+-#define copy_to_kernel_nofault(dst, src, size)                                 \
+-	probe_kernel_write((dst), (src), (size))
+-#endif
++#include <linux/uaccess.h>
+ 
+ #if defined(__aarch64__)
+ 
+diff --git a/uapi/supercall.h b/uapi/supercall.h
+index b2064554..151d4135 100644
+--- a/uapi/supercall.h
++++ b/uapi/supercall.h
+@@ -11,7 +11,7 @@
+ // 4: add KSU_GET_INFO_FLAG_BUNDLED
+ // 5: add EVENT_SERVICES with a start/skip result
+ // 6: add KSU_IOCTL_LOOKUP_SYMBOLS and KSU_GET_INFO_FLAG_PREINIT; modules.rc and preinit may live under /metadata/vold/ksu
+-#define KERNEL_SU_UAPI_VERSION 6
++#define KERNEL_SU_UAPI_VERSION 5
+ 
+ /* Magic numbers for reboot hook to install fd */
+ #define KSU_INSTALL_MAGIC1 0xDEADBEEF
