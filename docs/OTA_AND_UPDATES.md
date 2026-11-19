@@ -40,7 +40,7 @@ You have two fast ways to restore root:
 If you have a PC connected:
 ```bash
 adb reboot download
-~/Downloads/samloader flash --partition BOOT out/boot-ksu.img
+samloader flash --partition BOOT boot-ksu.img
 ```
 Your phone reboots immediately with KernelSU-Next restored.
 

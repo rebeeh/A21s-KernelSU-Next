@@ -46,7 +46,7 @@ Download the latest pre-compiled files from the [GitHub Releases](https://github
    ```
 2. Flash the boot image:
    ```bash
-   ~/Downloads/samloader flash --partition BOOT boot-ksu.img
+   samloader flash --partition BOOT boot-ksu.img
    ```
 3. The phone will reboot automatically.
 

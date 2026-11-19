@@ -25,7 +25,7 @@ This guide provides tested instructions for flashing the KernelSU-Next custom ke
 
 2. Flash the boot image:
    ```bash
-   ~/Downloads/samloader flash --partition BOOT out/boot-ksu.img
+   samloader flash --partition BOOT boot-ksu.img
    ```
 
 3. The phone will automatically reboot into LineageOS.
@@ -62,7 +62,7 @@ This guide provides tested instructions for flashing the KernelSU-Next custom ke
    ```
 3. Flash the boot partition:
    ```bash
-   heimdall flash --BOOT out/boot-ksu.img --no-reboot
+   heimdall flash --BOOT boot-ksu.img --no-reboot
    ```
 4. Hold `Volume Down` + `Power` to reboot normally.
 

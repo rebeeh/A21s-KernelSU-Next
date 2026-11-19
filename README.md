@@ -77,7 +77,8 @@ cd A21s-KernelSU-Next
 
 ### 2. Compile & Package Boot Image
 ```bash
-./scripts/build.sh
+# Pass stock boot.img or place boot.img in the project folder
+./scripts/build.sh boot.img
 ```
 The script will output:
 - `out/boot-ksu.img` (Flashable via recovery or fastboot/samloader)
@@ -87,7 +88,7 @@ The script will output:
 ### 3. Flash to Device (via `samloader`)
 ```bash
 adb reboot download
-~/Downloads/samloader flash --partition BOOT out/boot-ksu.img
+samloader flash --partition BOOT out/boot-ksu.img
 ```
 
 For alternative methods (Odin / Heimdall / TWRP / AnyKernel3), read the [Flashing Guide](docs/FLASHING_GUIDE.md).

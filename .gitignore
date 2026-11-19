@@ -1,55 +1,62 @@
-# Prerequisites
-*.d
+# ==============================================================================
+# Git Ignore Configuration for A21s KernelSU-Next
+# ==============================================================================
 
-# Object files
+# Build Outputs & Flashable Images
+out/
+build/
+*.img
+*.tar
+*.tar.gz
+*.tar.md5
+*.zip
+*.log
+*.tmp
+boot.img
+
+# Stock Boot Images & Local Backups
+stock/
+*.stock.*
+
+# External Prebuilts & Toolchains
+toolchain/
+tools/magiskboot
+
+# Cloned Kernel Source Tree (when building locally)
+a21s-kernel/
+KernelSU-Next/
+
+# Linux Kernel Build Artifacts
 *.o
+*.o.*
 *.ko
 *.obj
 *.elf
-
-# Linker output
-*.ilk
-*.map
-*.exp
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
-
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
-
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
-
-# Debug files
-*.dSYM/
-*.su
-*.idb
-*.pdb
-
-# Kernel Module Compile Results
-*.mod*
+*.d
 *.cmd
 .tmp_versions/
 modules.order
 Module.symvers
-Mkfile.old
-dkms.conf
+vmlinux
+vmlinux.o
+System.map
+arch/arm64/boot/Image
+arch/arm64/boot/Image.gz
+arch/arm64/boot/dts/**/*.dtb
 
-# debug information files
-*.dwo
+# Editor & IDE configurations
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.bak
+
+# OS-generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
