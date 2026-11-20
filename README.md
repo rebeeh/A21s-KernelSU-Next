@@ -30,6 +30,8 @@
 
 These are the core technical problems solved to make KernelSU-Next work reliably on the Galaxy A21s:
 
+- **Integrated SUSFS v1.5.5 Support** — Native kernel-level SUSFS (Super User Secret File System) v1.5.5 integrated into the Linux 4.19 VFS layer and KernelSU-Next manual hooks, adapted for Samsung's `fs_context` architecture (`vfs_create_mount`, `clone_mnt`). Includes suspicious mount hiding, path hiding, kstat spoofing, uname spoofing, and automatic umount. Reported as `SuSFS version: Supported | v1.5.5 (NON-GKI)` directly in the KernelSU Next Manager dashboard.
+- **Exact Driver Version Matching (33355)** — Kernel driver version override aligned with userspace `ksud 3.4.2` (`33355`), eliminating module installer mismatch warnings (e.g. in HMA-OSS Zygisk).
 - **TrustZone / TZASC Bypass via Manual Hooks** — The Samsung Exynos 850 uses hardware memory protection (TZASC / RKP) that traps dynamic runtime kprobes, triggering `irq/160-tzasc` kernel panics and bootloops. Compile-time, scope-minimized manual hooks were implemented across `fs/exec.c`, `fs/open.c`, `fs/read_write.c`, `fs/stat.c`, and `kernel/reboot.c`, delivering 100% stable execution without memory tampering.
 - **Strict UAPI 5 Parity** — Supercall interfaces are aligned with the official KernelSU-Next Manager `v3.4.2` and embedded `ksud (uapi: 5)`, eliminating manager warning banners and unlocking full Superuser and Module management tabs.
 - **Linux 4.19 Backports** — `path_umount` from Linux 5.9+ has been backported into `fs/namespace.c` to enable native KernelSU module mount hiding without kernel crashes.

@@ -78,3 +78,5 @@ env/
 *.pstore
 *.patch
 *.diff
+!patches/*.patch
+!patches/*.diff

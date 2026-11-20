@@ -165,6 +165,26 @@ Samsung backported `copy_to_kernel_nofault` into their 4.19 kernel branch. Kerne
 
 ---
 
+## 5️⃣ SUSFS v1.5.5 Integration & Samsung VFS Adaptation
+
+To provide robust anti-detection against advanced root scanners and banking protections, **SUSFS (Super User Secret File System) v1.5.5** is integrated directly into the kernel VFS and KernelSU-Next runtime.
+
+### Key Architecture & Implementation Details
+
+1. **Samsung `fs_context` Adaptation (`fs/namespace.c`)**:
+   - Stock Linux 4.19 patches assume upstream `vfs_kern_mount` handles mount point allocation. Samsung's Exynos kernel backports the Linux 5.x `fs_context` subsystem with `vfs_create_mount`.
+   - The mount allocation, zygote `mnt_id` tracking, and KSU domain mount spoofing were adapted directly into `vfs_create_mount` and `clone_mnt`, ensuring all mount entries created by KSU are spoofed or hidden seamlessly.
+
+2. **KernelSU-Next Integration (`KernelSU-Next/kernel/feature/susfs.c`)**:
+   - Supercall dispatch hook for `SUSFS_MAGIC` (`0xFAFAFAFA`) to answer `ksud susfs` queries (`version`, `variant`, `features`).
+   - Syscall hook for `prctl(0xDEADBEEF)` to handle userspace `ksu_susfs` companion binary commands.
+   - Comprehensive try-umount pipeline (`susfs_try_umount_all`) unmounting suspicious paths before standard module paths for all unauthorized UIDs.
+
+3. **Driver Version Parity**:
+   - Kernel driver version is compiled with `KSU_VERSION_OVERRIDE=33355` matching userspace `ksud 3.4.2` (`33355`), eliminating module installer mismatch warnings.
+
+---
+
 ## 🔗 Related Docs
 
 | Document | Description |
