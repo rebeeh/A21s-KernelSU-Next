@@ -185,6 +185,26 @@ To provide robust anti-detection against advanced root scanners and banking prot
 
 ---
 
+## 6️⃣ Userspace Hooking & Stealth Isolation Pipeline
+
+To complement Ring-0 kernel isolation, the runtime userspace layer combines standalone Zygisk injection, stealth Xposed hooking, and application concealment.
+
+### 1. Standalone Zygisk (ReZygisk) Architecture
+- Operates via ptrace injection into Android's 64-bit and 32-bit `zygote` processes on early boot (`post-fs-data`).
+- **SELinux Socket Bridging**: Added policy rule `allow zygote unlabeled sock_file { read write getattr open }` and `allow zygote su unix_stream_socket connectto` to allow ptrace tracer sockets (`cp64.sock` / `cp32.sock`) to communicate under enforcing SELinux.
+- **Manager Badge Behavior**: ReZygisk injects directly into zygote rather than setting environment variables in the Manager app. As a result, the Manager UI displays an informational `ZYGISK REQUIRED` chip while ReZygisk itself is fully active.
+
+### 2. Modern Hooking Framework (Vector)
+- Replaces legacy LSPosed with stealth native hooking.
+- **Toybox Compatibility**: Android's toybox `unshare` utility does not support GNU `--propagation slave`. Vector service scripts are adapted to use `unshare -m` for mount namespace isolation.
+- **Resource Cache Protection**: Vector's daemon avoids mounting raw tmpfs over `/data/resource-cache`, preventing SELinux collisions and `SIGABRT` crashes in Android's `idmap2d`.
+
+### 3. Application Concealment (HMA-OSS)
+- Intercepts package manager queries and procfs scans to isolate root managers, hooking daemons, and framework packages from target applications.
+- Configured with dedicated KernelSU root profiles (`ksud profile set`) to maintain persistent system service integration.
+
+---
+
 ## 🔗 Related Docs
 
 | Document | Description |

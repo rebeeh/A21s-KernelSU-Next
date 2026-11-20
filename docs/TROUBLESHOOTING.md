@@ -17,7 +17,8 @@ Use this table to jump straight to your symptom:
 | Root Checker says **"not properly installed"** | [Issue 5 — Root Checker Fails](#-issue-5-root-checker-says-root-not-properly-installed) |
 | `adb shell su` returns **"inaccessible or not found"** | [Blindspot 1 — ADB Shell su Fails](#-blindspot-1-adb-shell-su-fails) |
 | A **module** causes a bootloop | [Blindspot 2 — Module-Induced Bootloop](#-blindspot-2-incompatible-module-causing-bootloop) |
-| **Banking / Play Integrity** apps fail | [Blindspot 4 — Play Integrity & Banking Apps](#-blindspot-4-google-play-integrity--banking-apps) |
+| Manager shows **"ZYGISK REQUIRED"** on active modules | [Issue 6 — Zygisk Required Badge in Manager](#-issue-6-manager-shows-zygisk-required-badge-on-active-modules) |
+| **Banking / Play Integrity** apps fail / UNEVALUATED | [Blindspot 4 — Play Integrity, Knox & Keybox](#-blindspot-4-google-play-integrity-knox-tripping--hardware-attestation) |
 | Root disappears after **every LineageOS nightly** | [Blindspot 5 — Dynamic Partitions & OTA Updates](#-blindspot-5-dynamic-partitions--lineageos-nightly-updates) |
 | None of the above — need to report a bug | [How to Report an Issue](#-how-to-report-an-issue) |
 
@@ -223,6 +224,20 @@ If you do have a GitHub account but aren't logged in, GitHub will show its login
 
 ---
 
+### 🟢 Issue 6: Manager Shows "ZYGISK REQUIRED" Badge on Active Modules
+
+| | |
+|---|---|
+| **Cause** | KernelSU-Next Manager checks `getenv("ZYGISK_ENABLED")` in its JNI layer (`is_zygisk_enabled()`). Standalone Zygisk injectors (like ReZygisk) hook Zygote and target apps via ptrace, but do not set this environment variable inside the Manager app's process space. The "ZYGISK REQUIRED" chip is purely a visual indicator from the Manager UI. |
+| **Verification** | The modules are **fully operational and active**. ReZygisk shows `[Monitor: ✅, ReZygisk 64-bit: ✅, ReZygisk 32-bit: ✅]`, Vector operates on API Version 102, and HMA-OSS displays `[✅ System service loaded]`. |
+
+**How to verify real Zygisk status:**
+1. Run `adb shell cat /data/adb/modules/rezygisk/module.prop` — verify both 64-bit and 32-bit monitors show green checkmarks.
+2. Check `adb shell "/data/adb/modules/zygisk_vector/bin/vector-arm64 --version"` — confirms the Vector hooking framework daemon is running.
+3. Check HMA-OSS in `module.prop` or open the HMA-OSS app — it confirms `[System service loaded]`.
+
+---
+
 ## 🛡️ Section 3 — Critical Blindspots & Edge-Case Management
 
 These are known engineering edge cases when running KernelSU-Next on the Galaxy A21s (SM-A217F) under LineageOS 24, with their built-in mitigations explained.
@@ -329,30 +344,38 @@ ksu.uapi=6
 
 ---
 
-### 🔵 Blindspot 4: Google Play Integrity & Banking Apps
+### 🔵 Blindspot 4: Google Play Integrity, Knox Tripping & Hardware Attestation
 
-**Current Built-In Root Hiding (No Config Required):**
+**Architecture Background:**
 
-The kernel has hardware-level root hiding built in for all non-granted app UIDs:
+1. **Kernel-Level (Ring 0) Concealment**:
+   - **KernelSU-Next + SUSFS** operates inside kernel space. It makes the root implementation, `/system/bin/su`, overlay mounts, and Zygisk injection completely invisible to userspace scanners.
+   - Built-in features active in this build:
+     | Feature | Supercall ID | Effect |
+     |---|---|---|
+     | `kernel_umount` | `ID=1` | Unmounts module namespaces for unauthorized apps |
+     | `selinux_hide` | `ID=4` | Sanitizes `/sys/fs/selinux` access results per app UID |
+     | `avc_spoof` | `ID=10003` | Suppresses SELinux audit logs that leak root context |
+     | `susfs_vfs` | `0xFAFAFAFA` | Kernel VFS-level directory and path concealment |
 
-| Feature | Supercall ID | Effect |
-|---|---|---|
-| `kernel_umount` | `ID=1` | Unmounts module namespaces for unauthorized apps |
-| `selinux_hide` | `ID=4` | Sanitizes `/sys/fs/selinux` access results per app UID |
-| `avc_spoof` | `ID=10003` | Suppresses SELinux audit logs that leak root context |
+2. **The Cryptographic Barrier: Knox efuse (0x1) & Hardware Attestation**:
+   - Unlocking the bootloader on Samsung devices permanently blows the physical Knox warranty bit (`0x1`).
+   - The hardware TEE (TrustZone / Keymaster) permanently revokes the Samsung Device Attestation Key (DAK):
+     ```text
+     keymaster_tee: Cannot open /mnt/vendor/efs/DAK/GAK_RSA.private, ret -932
+     ```
+   - When an application queries Google's **Play Integrity API**, Google Play Services asks the hardware keystore to produce an X.509 certificate chain signed by the hardware key.
+   - Because the hardware DAK is revoked/broken, and the bootloader state is `UNVERIFIED`, Google's backend server returns `UNEVALUATED` across verdicts or fails `MEETS_DEVICE_INTEGRITY` and `MEETS_STRONG_INTEGRITY`.
+   - Furthermore, if Google Play Store / Google Play Services lacks a valid authenticated user session (`AuthFailureError: User needs to (re)enter credentials`), token evaluation is aborted server-side, leaving all fields as `UNEVALUATED`.
 
-Banking apps performing basic file/permission checks pass natively without any extra configuration.
+**Why the Kernel Alone Cannot Forge Strong Integrity:**
 
-**The Remaining Blindspot:**
-
-Advanced apps querying Google's **Play Integrity API** (`MEETS_DEVICE_INTEGRITY`) detect that the bootloader is unlocked (`ro.boot.verifiedbootstate=orange`). This requires an additional one-time setup.
-
-**Complete Setup for Full Play Integrity Pass:**
-
-1. In **KernelSU Next Manager** → **Modules** tab → install **[Zygisk-Next](https://github.com/Dr-TSNG/ZygiskNext)**.
-2. Install **[PlayIntegrityFix](https://github.com/chiteroman/PlayIntegrityFix)** (PIF) module.
-3. Reboot the device.
-4. Verify using the **Play Integrity API Checker** app: both `MEETS_BASIC_INTEGRITY` and `MEETS_DEVICE_INTEGRITY` should pass cleanly on Android 17 / LineageOS 24.
+- KernelSU-Next and SUSFS hide root, process trees, and filesystem modifications from userspace apps.
+- However, Google's `MEETS_STRONG_INTEGRITY` verdict is evaluated on **Google's cloud servers**, which verify the asymmetric RSA signature against Google's trusted hardware OEM root certificates.
+- The kernel cannot forge Google's cloud-validated cryptographic signature.
+- As detailed in the deployment specification:
+  > *"A valid keybox environment passes MEETS_STRONG_INTEGRITY through Google Play Integrity. The server receives a hardware-backed cryptographic verdict that matches an untouched device baseline... Ensure your keybox is configured and Google Play Integrity returns a passing device verdict."*
+- To pass `MEETS_STRONG_INTEGRITY`, an unrevoked, private OEM `keybox.xml` must be loaded by the hardware keystore attestation injector. Public keyboxes get banned by Google within days. Once a valid private keybox is configured and Google Play Services is authenticated, `MEETS_DEVICE_INTEGRITY` and `MEETS_STRONG_INTEGRITY` pass cleanly.
 
 ---
 
