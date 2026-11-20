@@ -1,3 +1,15 @@
+diff --git a/kernel/Kbuild b/kernel/Kbuild
+index f7e8d520..853d518e 100644
+--- a/kernel/Kbuild
++++ b/kernel/Kbuild
+@@ -152,6 +152,7 @@ endif
+ # legacy: keep version derived from commit count, with a +289 offset so
+ # the reported ksuver stays in line with the manager versionCode
+ # (maintainer preference, #1549)
++KSU_VERSION_OVERRIDE ?= 33355
+ ifdef KSU_VERSION_OVERRIDE
+ KSU_VERSION := $(KSU_VERSION_OVERRIDE)
+ $(info -- KernelSU-Next version override: $(KSU_VERSION))
 diff --git a/kernel/hook/patch_memory.c b/kernel/hook/patch_memory.c
 index d9e40ccf..5577d842 100644
 --- a/kernel/hook/patch_memory.c
@@ -58,13 +70,15 @@ index e0cb20c4..0d23df29 100644
  
  #endif // __KSU_H_SUPERCALL_INTERNAL
 diff --git a/kernel/supercall/supercall.c b/kernel/supercall/supercall.c
-index 9c7ac7bb..85db0e2b 100644
+index 9c7ac7bb..d259d88d 100644
 --- a/kernel/supercall/supercall.c
 +++ b/kernel/supercall/supercall.c
-@@ -23,6 +23,8 @@
+@@ -22,7 +22,9 @@
+ 
  #include "sulog/event.h"
  
- uint32_t ksuver_override = 0;
+-uint32_t ksuver_override = 0;
++uint32_t ksuver_override = 33355;
 +uint32_t ksu_uapi_override = 0;
 +module_param_named(uapi, ksu_uapi_override, uint, 0);
  
