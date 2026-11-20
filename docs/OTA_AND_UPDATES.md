@@ -124,6 +124,11 @@ Whenever you push an update or manually trigger the workflow:
 
 ## 🔗 Related Docs
 
-- [Build Guide](BUILD.md) — How to compile the kernel locally or via CI
-- [Installation Guide](INSTALLATION.md) — First-time setup and flashing instructions
-- [Troubleshooting](TROUBLESHOOTING.md) — Common issues and fixes
+| Document | Description |
+| :--- | :--- |
+| [📖 User Installation Guide](USER_GUIDE.md) | First-time setup, downloading releases, and granting root permissions |
+| [⚡ Flashing Methods Guide](FLASHING_GUIDE.md) | Step-by-step flashing instructions for AnyKernel3, Odin, samloader, and Heimdall |
+| [🛠️ Kernel Build Guide](BUILD.md) | How to compile the kernel locally, with Docker, or via GitHub Actions |
+| [🛠️ Troubleshooting & Diagnostics](TROUBLESHOOTING.md) | Common OTA issues, bootloop recovery, and log extraction |
+| [🏗️ Technical Architecture](ARCHITECTURE.md) | Hardware security, Samsung TZASC, dynamic UAPI, and SUSFS design |
+| [📚 Documentation Hub](README.md) | Master index and navigation hub |

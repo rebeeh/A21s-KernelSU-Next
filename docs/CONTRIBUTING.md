@@ -398,10 +398,14 @@ The **manual hooks pattern** developed for the Galaxy A21s (SM-A217F / Exynos 85
 
 | Document | Description |
 |---|---|
-| [README](../README.md) | Project overview, quick-start build instructions |
-| [BUILD](BUILD.md) | Detailed build environment setup and compilation guide |
-| [FLASHING](FLASHING.md) | How to flash the kernel to your Galaxy A21s |
-| [TROUBLESHOOTING](TROUBLESHOOTING.md) | Common issues and fixes |
+| [📖 User Installation Guide](USER_GUIDE.md) | First-time installation and root setup |
+| [⚡ Flashing Methods Guide](FLASHING_GUIDE.md) | Step-by-step flashing for AnyKernel3, Odin, samloader, and Heimdall |
+| [🛠️ Kernel Build Guide](BUILD.md) | Detailed build environment setup and compilation guide |
+| [🔄 OTA Updates Survival](OTA_AND_UPDATES.md) | Preserving root across LineageOS updates |
+| [🏗️ Technical Architecture](ARCHITECTURE.md) | TrustZone, manual hooks, and SUSFS design |
+| [🔬 Research & Implementation Report](RESEARCH.md) | Engineering analysis, kprobe disassembly, and UAPI |
+| [🛠️ Troubleshooting & Diagnostics](TROUBLESHOOTING.md) | Log extraction, bootloop recovery, and issue templates |
+| [📚 Documentation Hub](README.md) | Master index and navigation hub |
 
 ---
 

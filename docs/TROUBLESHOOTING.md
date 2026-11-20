@@ -426,8 +426,11 @@ Before opening a GitHub issue, run through this checklist:
 
 | Document | Description |
 |---|---|
-| [README.md](../README.md) | Project overview, features, and quick-start installation |
-| [BUILD.md](BUILD.md) | Full kernel build instructions and configuration options |
-| [FLASHING.md](FLASHING.md) | Step-by-step flashing guide for `boot-ksu.img` and AnyKernel3 zip |
-| [MODULES.md](MODULES.md) | Recommended KernelSU-Next modules and compatibility notes |
-| [CHANGELOG.md](CHANGELOG.md) | Release history and version notes |
+| [📖 User Installation Guide](USER_GUIDE.md) | Beginner-friendly installation and root setup |
+| [⚡ Flashing Methods Guide](FLASHING_GUIDE.md) | Step-by-step flashing guide for AnyKernel3 zip, samloader, Odin, and Heimdall |
+| [🛠️ Kernel Build Guide](BUILD.md) | Full kernel build instructions, Docker, and CI options |
+| [🔄 OTA Updates Survival](OTA_AND_UPDATES.md) | Retain root across LineageOS updates |
+| [🏗️ Technical Architecture](ARCHITECTURE.md) | Deep dive on Exynos 850 TrustZone, TZASC, and SUSFS |
+| [🔬 Research & Implementation Report](RESEARCH.md) | Engineering analysis, kprobe disassembly, and UAPI |
+| [🤝 Contributing Guidelines](CONTRIBUTING.md) | How to submit patches, report bugs, and test variants |
+| [📚 Documentation Hub](README.md) | Master index and navigation hub |

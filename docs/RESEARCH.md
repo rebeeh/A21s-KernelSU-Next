@@ -373,7 +373,10 @@ This research phase produced five concrete, re-usable engineering outcomes:
 
 | Document | Description |
 |---|---|
-| [README.md](../README.md) | Project overview, quick-start build & flash guide |
-| [PATCHES.md](PATCHES.md) | Detailed description of every patch in `patches/` |
-| [BUILD.md](BUILD.md) | Step-by-step local and CI build instructions |
-| [CHANGELOG.md](CHANGELOG.md) | Release history and version log |
+| [🏗️ Technical Architecture](ARCHITECTURE.md) | In-depth hardware security, TZASC breakdown, and SUSFS design |
+| [🛠️ Kernel Build Guide](BUILD.md) | Step-by-step local and CI build instructions |
+| [📖 User Installation Guide](USER_GUIDE.md) | First-time installation and root management guide |
+| [⚡ Flashing Methods Guide](FLASHING_GUIDE.md) | Detailed flashing walkthrough for AnyKernel3, Odin, samloader, and Heimdall |
+| [🛠️ Troubleshooting & Diagnostics](TROUBLESHOOTING.md) | Log extraction, bootloop recovery, and diagnostics |
+| [🤝 Contributing Guidelines](CONTRIBUTING.md) | Contribution standards, testing checklist, and porting guide |
+| [📚 Documentation Hub](README.md) | Master index and navigation hub |

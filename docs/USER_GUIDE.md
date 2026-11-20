@@ -182,10 +182,41 @@ KernelSU-Next uses a **kernel driver** that completely hides `su` and all root c
 
 ---
 
+## 🧩 Advanced Module Setup & Stealth Isolation Stack
+
+For users needing high-security app isolation, banking app stealth, and hooking capabilities, the validated module stack on this kernel includes:
+
+```mermaid
+flowchart TD
+    KSU["KernelSU-Next Legacy + SUSFS v1.5.5<br/>(Ring-0 Kernel Stealth)"] --> RZ["ReZygisk<br/>(Zygote Tracer Injection)"]
+    RZ --> VEC["Vector v2.2<br/>(Modern Stealth Xposed Hooking)"]
+    RZ --> HMA["HMA-OSS<br/>(Hide My Applist Package Concealment)"]
+    RZ --> DET["Zygisk Detach<br/>(Play Store Auto-Update Unbinding)"]
+    HMA --> APP["Target App<br/>(Sees Enforcing SELinux, Clean Mounts & No Root)"]
+```
+
+### Module Stack Verification Checklist
+
+1. **ReZygisk**: Provides the Zygisk API foundation via ptrace tracer injection.
+   - Verify: `adb shell cat /data/adb/modules/rezygisk/module.prop` shows `[Monitor: ✅, ReZygisk 64-bit: ✅, ReZygisk 32-bit: ✅]`.
+   - *Note on Manager badge:* KernelSU Manager displays an informational `ZYGISK REQUIRED` chip because ReZygisk injects into zygote without modifying the Manager process environment. This does **not** affect functionality.
+2. **Vector (Modern Xposed Framework)**: Replaces legacy LSPosed with clean in-memory hooking.
+   - Manager APK can be installed via ADB (`org.matrix.vector.manager`).
+3. **HMA-OSS (Hide My Applist)**: Pre-configured via `HMA-OSS_config.json` to hide root managers, Vector, and framework packages.
+   - Profile permissions can be set in KernelSU Manager or with `ksud profile set`.
+4. **Zygisk-Detach**: Detaches target applications from Google Play Store update checks to prevent unintended background upgrades.
+5. **Hardware Attestation (Keybox)**: `MEETS_STRONG_INTEGRITY` requires an unrevoked private OEM `keybox.xml`. Public keyboxes are revoked by Google within days.
+
+---
+
 ## 🔗 Related Docs
 
 | Document | Description |
 | :--- | :--- |
-| [BUILD_GUIDE.md](BUILD_GUIDE.md) | How to compile the kernel from source |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute patches and improvements |
-| [README.md](../README.md) | Project overview, feature list, and changelog |
+| [⚡ Flashing Guide](FLASHING_GUIDE.md) | Detailed flashing methods (AnyKernel3, samloader, Odin, Heimdall) |
+| [🛠️ Kernel Build Guide](BUILD.md) | How to compile the kernel from source or CI |
+| [🔄 OTA Updates Survival](OTA_AND_UPDATES.md) | How to retain root across LineageOS updates |
+| [🛠️ Troubleshooting & Diagnostics](TROUBLESHOOTING.md) | Common errors, logs extraction, and fixes |
+| [🏗️ Technical Architecture](ARCHITECTURE.md) | Hardware security, TrustZone, and SUSFS design |
+| [🤝 Contributing Guidelines](CONTRIBUTING.md) | How to contribute patches and improvements |
+| [📚 Documentation Hub](README.md) | Project overview, navigation hub, and full index |

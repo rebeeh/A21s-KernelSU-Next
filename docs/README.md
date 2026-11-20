@@ -9,8 +9,9 @@
 | I want to… | Go here |
 | :--- | :--- |
 | Get root on my A21s for the first time | [User Installation Guide](USER_GUIDE.md) |
-| Flash the kernel ZIP via recovery | [AnyKernel3 method](FLASHING_GUIDE.md#method-3-using-anykernel3-recovery-zip-recommended) |
-| Flash via Linux terminal (`samloader`) | [samloader method](FLASHING_GUIDE.md#method-1-using-samloader-on-linux-recommended--fastest) |
+| Flash the kernel ZIP via recovery | [AnyKernel3 method](FLASHING_GUIDE.md#method-2-anykernel3-via-recovery-no-pc-required) |
+| Flash via Linux terminal (`samloader`) | [samloader method](FLASHING_GUIDE.md#method-1-samloader-linux--recommended) |
+| Compile the kernel from source / CI | [Kernel Compilation Guide](BUILD.md) |
 | Survive a LineageOS OTA update | [OTA & Updates Survival](OTA_AND_UPDATES.md) |
 | Debug a bootloop or pull kernel logs | [Troubleshooting & Diagnostics](TROUBLESHOOTING.md) |
 | Understand how the kernel/KSU integration works | [Technical Architecture](ARCHITECTURE.md) |
@@ -25,8 +26,9 @@
 | :--- | :--- | :--- |
 | **[User Installation Guide](USER_GUIDE.md)** | End Users | Step-by-step beginner guide to getting root on LineageOS 24 via recovery ZIP or PC. |
 | **[Flashing Guide](FLASHING_GUIDE.md)** | All Users | Detailed flashing instructions using `AnyKernel3`, `samloader`, `Heimdall`, and `Odin`. |
+| **[Kernel Compilation Guide](BUILD.md)** | Developers / Power Users | How to build the kernel locally with Clang, Docker, Python CLI, or GitHub Actions. |
 | **[OTA & Updates Survival](OTA_AND_UPDATES.md)** | All Users | How to survive LineageOS nightly/weekly updates without losing data or root. |
-| **[Technical Architecture](ARCHITECTURE.md)** | Developers / Engineers | Deep-dive on Samsung Exynos 850 TrustZone (TZASC IRQ 160) and manual hooks implementation. |
+| **[Technical Architecture](ARCHITECTURE.md)** | Developers / Engineers | Deep-dive on Samsung Exynos 850 TrustZone (TZASC IRQ 160), SUSFS v1.5.5, and manual hooks. |
 | **[Research & Implementation Report](RESEARCH.md)** | Developers / Researchers | Comprehensive analysis of Exynos 850 kernel trees, dynamic kprobes vs manual hooks, and UAPI 5 parity. |
 | **[Troubleshooting & Bug Reporting](TROUBLESHOOTING.md)** | All Users | Extracting `ramoops`, `dmesg`, `logcat`, and `ksud` logs, bootloop recovery, and issue templates. |
 | **[Contributing Guidelines](CONTRIBUTING.md)** | Contributors | How to contribute code, submit patches, and verify kernel builds. |
@@ -35,36 +37,19 @@
 
 ## 🧭 Reading Flow — Where to Start
 
-Use this visual map to follow the right path based on your goal.
+Use this visual map to follow the right path based on your goal:
 
-```
-                      ┌─────────────────────────────────────┐
-                      │  New to the project?                │
-                      │  Start → USER_GUIDE.md              │
-                      └────────────┬────────────────────────┘
-                                   │
-              ┌────────────────────▼────────────────────────┐
-              │  Ready to flash?                            │
-              │  FLASHING_GUIDE.md                          │
-              │  (AnyKernel3 ZIP  /  samloader  /  Odin)   │
-              └────────────────────┬────────────────────────┘
-                                   │
-         ┌─────────────────────────▼──────────────────────────┐
-         │  Got root? Want to keep it across OTA updates?     │
-         │  OTA_AND_UPDATES.md                                │
-         └──────────┬────────────────────────┬────────────────┘
-                    │                        │
-     ┌──────────────▼──────────┐  ┌──────────▼──────────────────┐
-     │ Something broke?        │  │ Want to go deeper?           │
-     │ TROUBLESHOOTING.md      │  │ ARCHITECTURE.md              │
-     │ (logs, bootloops,       │  │ RESEARCH.md                  │
-     │  issue templates)       │  │ (Exynos 850, kprobes, hooks) │
-     └─────────────────────────┘  └──────────────────────────────┘
-                                           │
-                               ┌───────────▼───────────────────┐
-                               │ Want to contribute?           │
-                               │ CONTRIBUTING.md               │
-                               └───────────────────────────────┘
+```mermaid
+flowchart TD
+    Start["New to the Project?"] --> UG["📖 USER_GUIDE.md<br/>(First-time root setup)"]
+    UG --> FG["⚡ FLASHING_GUIDE.md<br/>(AnyKernel3 / samloader / Odin)"]
+    FG --> Success{"Root Active & Working?"}
+    Success -- "Yes" --> OTA["🔄 OTA_AND_UPDATES.md<br/>(Survive LineageOS nightlies)"]
+    Success -- "No / Issues" --> TB["🛠️ TROUBLESHOOTING.md<br/>(Logs, bootloops, diagnostics)"]
+    OTA --> Deep{"Want to Go Deeper?"}
+    Deep -- "Build from source" --> BG["🛠️ BUILD.md<br/>(Clang, Docker, GitHub Actions)"]
+    Deep -- "Architecture & Security" --> ARCH["🏗️ ARCHITECTURE.md<br/>& RESEARCH.md<br/>(TZASC, SUSFS, Hooking)"]
+    BG & ARCH --> CONT["🤝 CONTRIBUTING.md<br/>(Patches, variants & PRs)"]
 ```
 
 > [!TIP]
@@ -127,4 +112,5 @@ After reading this hub, the natural next stop is the **[User Installation Guide]
 | OTA & Updates Survival | [Troubleshooting & Bug Reporting](TROUBLESHOOTING.md) |
 | Troubleshooting | [Technical Architecture](ARCHITECTURE.md) |
 | Technical Architecture | [Research & Implementation Report](RESEARCH.md) |
-| Research Report | [Contributing Guidelines](CONTRIBUTING.md) |
+| Research Report | [Kernel Compilation Guide](BUILD.md) |
+| Kernel Compilation | [Contributing Guidelines](CONTRIBUTING.md) |

@@ -17,7 +17,7 @@
 | :--- | :--- |
 | Download prebuilt flashable images (v1.1.0) | [GitHub Releases (v1.1.0)](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest) |
 | Flash the kernel right now (no compiling) | [End-User Installation Guide](docs/USER_GUIDE.md) |
-| Build from source | [⚡ Build the Kernel](#-build-the-kernel) |
+| Build from source | [Kernel Compilation Guide](docs/BUILD.md) |
 | Flash to my device | [📲 Flash to Your Device](#-flash-to-your-device) |
 | Understand what makes this kernel special | [🌟 Engineering Highlights](#-engineering-highlights) |
 | Troubleshoot a boot issue | [Troubleshooting Guide](docs/TROUBLESHOOTING.md) |
@@ -184,6 +184,7 @@ A21s-KernelSU-Next/
 ├── docs/
 │   ├── README.md                  # Documentation navigation hub & repository index
 │   ├── ARCHITECTURE.md            # Hardware security, TZASC breakdown & technical design
+│   ├── BUILD.md                   # Kernel compilation guide (Clang, Docker, Python CLI, CI)
 │   ├── CONTRIBUTING.md            # Community contribution & porting guidelines
 │   ├── FLASHING_GUIDE.md          # Flashing instructions via AnyKernel3, samloader, Odin, and Heimdall
 │   ├── OTA_AND_UPDATES.md         # Preserving root across LineageOS OTA updates
@@ -211,6 +212,7 @@ A21s-KernelSU-Next/
 | 📚 [Documentation Hub & Index](docs/README.md) | Full index of all project docs |
 | 🧑‍💻 [End-User Installation & Root Guide](docs/USER_GUIDE.md) | No compiling needed — start here if you just want root |
 | ⚡ [Flashing Methods](docs/FLASHING_GUIDE.md) | AnyKernel3, samloader, Odin, Heimdall — step by step |
+| 🛠️ [Kernel Compilation & Build Guide](docs/BUILD.md) | Build from source with Clang, Docker, Python CLI, or GitHub Actions |
 | 🔄 [OTA Updates & Kernel Lifecycle](docs/OTA_AND_UPDATES.md) | How to survive LineageOS OTA updates without losing root |
 | 🛠️ [Troubleshooting & Diagnostics](docs/TROUBLESHOOTING.md) | Log extraction, common errors, and fixes |
 | 🏗️ [Hardware Architecture & TZASC Analysis](docs/ARCHITECTURE.md) | Deep dive into Exynos 850 TrustZone constraints |

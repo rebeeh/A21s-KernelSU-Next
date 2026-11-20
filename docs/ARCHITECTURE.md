@@ -13,6 +13,8 @@
 | The five hooked syscall sites | [Hook Call Sites Table](#the-5-manual-hook-call-sites) |
 | Manager app / UAPI versioning | [§3 UAPI Versioning & Manager Parity](#3️⃣-uapi-versioning--manager-parity) |
 | Kernel backports and host fixes | [§4 Backports & Host Fixes](#4️⃣-backports--host-fixes) |
+| SUSFS v1.5.5 Samsung VFS adaptation | [§5 SUSFS v1.5.5 Integration](#5️⃣-susfs-v155-integration--samsung-vfs-adaptation) |
+| Userspace Zygisk & stealth hooking stack | [§6 Userspace Hooking & Stealth Pipeline](#6️⃣-userspace-hooking--stealth-isolation-pipeline) |
 
 ---
 
@@ -209,7 +211,11 @@ To complement Ring-0 kernel isolation, the runtime userspace layer combines stan
 
 | Document | Description |
 |---|---|
-| [BUILD.md](BUILD.md) | Step-by-step build instructions, toolchain setup, and `make` invocations. |
-| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Common build and boot errors, with fixes. |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | How to submit patches, branch strategy, and coding style. |
-| [README.md](../README.md) | Project overview, feature list, and quick-start for end users. |
+| [📖 User Installation Guide](USER_GUIDE.md) | Beginner-friendly installation and root management guide |
+| [⚡ Flashing Methods Guide](FLASHING_GUIDE.md) | Walkthrough for AnyKernel3, Odin, samloader, and Heimdall |
+| [🛠️ Kernel Build Guide](BUILD.md) | Step-by-step build instructions, toolchain setup, and `make` invocations |
+| [🔄 OTA Updates Survival](OTA_AND_UPDATES.md) | Retain root across LineageOS nightlies in 5 seconds |
+| [🔬 Research & Implementation Report](RESEARCH.md) | Complete engineering notes, kprobe disassembly, and UAPI analysis |
+| [🛠️ Troubleshooting & Diagnostics](TROUBLESHOOTING.md) | Common build and boot errors, log extraction, and fixes |
+| [🤝 Contributing Guidelines](CONTRIBUTING.md) | How to submit patches, branch strategy, and coding style |
+| [📚 Documentation Hub](README.md) | Master index and navigation hub |

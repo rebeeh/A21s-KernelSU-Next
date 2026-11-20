@@ -150,6 +150,11 @@ After the phone boots into LineageOS, confirm that KernelSU-Next is active:
 
 ## 🔗 Related Docs
 
-- [**README**](../README.md) — Project overview, build targets, and feature list.
-- [**Build Guide**](BUILD.md) — How to compile the kernel and generate flashable artifacts from source.
-- [**Troubleshooting**](TROUBLESHOOTING.md) — Common flashing errors and how to recover.
+| Document | Description |
+| :--- | :--- |
+| [📖 User Installation Guide](USER_GUIDE.md) | Beginner-friendly walkthrough for getting root on LineageOS 24 |
+| [🛠️ Kernel Build Guide](BUILD.md) | How to compile the kernel and generate flashable artifacts from source |
+| [🔄 OTA Updates Survival](OTA_AND_UPDATES.md) | Retain root across nightly LineageOS updates in 5 seconds |
+| [🛠️ Troubleshooting & Diagnostics](TROUBLESHOOTING.md) | Common flashing errors, bootloops, and log extraction |
+| [🏗️ Technical Architecture](ARCHITECTURE.md) | Deep dive on Exynos 850 TrustZone, TZASC, and SUSFS |
+| [📚 Documentation Hub](README.md) | Master index and navigation hub |
