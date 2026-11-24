@@ -359,14 +359,25 @@ ksu.uapi=6
      | `susfs_vfs` | `0xFAFAFAFA` | Kernel VFS-level directory and path concealment |
 
 2. **The Cryptographic Barrier: Knox efuse (0x1) & Hardware Attestation**:
-   - Unlocking the bootloader on Samsung devices permanently blows the physical Knox warranty bit (`0x1`).
-   - The hardware TEE (TrustZone / Keymaster) permanently revokes the Samsung Device Attestation Key (DAK):
+   - On custom ROMs (LineageOS), Samsung's `hal_keymaster_default` is initially blocked by SELinux from accessing `/mnt/vendor/efs/DAK/`:
      ```text
+     avc: denied { search } for name="DAK" dev="mmcblk0p1" scontext=u:r:hal_keymaster_default:s0 tcontext=u:object_r:prov_efs_file:s0
      keymaster_tee: Cannot open /mnt/vendor/efs/DAK/GAK_RSA.private, ret -932
      ```
-   - When an application queries Google's **Play Integrity API**, Google Play Services asks the hardware keystore to produce an X.509 certificate chain signed by the hardware key.
-   - Because the hardware DAK is revoked/broken, and the bootloader state is `UNVERIFIED`, Google's backend server returns `UNEVALUATED` across verdicts or fails `MEETS_DEVICE_INTEGRITY` and `MEETS_STRONG_INTEGRITY`.
-   - Furthermore, if Google Play Store / Google Play Services lacks a valid authenticated user session (`AuthFailureError: User needs to (re)enter credentials`), token evaluation is aborted server-side, leaving all fields as `UNEVALUATED`.
+   - When SELinux blocks DAK access or if the physical Knox warranty bit (`0x1`) is tripped without fallback, Keymaster returns error `-932`.
+   - **Resolution applied**: We inject the missing SELinux policy rules via `/data/adb/ksu/bin/ksud sepolicy patch`:
+     ```text
+     allow hal_keymaster_default prov_efs_file dir { search read open getattr }
+     allow hal_keymaster_default prov_efs_file file { read open getattr }
+     allow hal_keymaster_default efs_file dir { search read open getattr }
+     allow hal_keymaster_default efs_file file { read open getattr }
+     ```
+   - This immediately restores Keymaster access to the Samsung Device Attestation Keys and certificates, elevating Play Integrity from completely `UNEVALUATED` (3 Red X's) to:
+     - `MEETS_BASIC_INTEGRITY`: **PASSED (Green Checkmark)**
+     - `appRecognitionVerdict`: **`PLAY_RECOGNIZED`**
+     - `appLicensingVerdict`: **`LICENSED`**
+     - `playProtectVerdict`: **`NO_ISSUES`**
+     - `deviceActivityLevel`: **`LEVEL_1`**
 
 **Why the Kernel Alone Cannot Forge Strong Integrity:**
 
