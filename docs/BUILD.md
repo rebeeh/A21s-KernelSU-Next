@@ -148,6 +148,39 @@ To package a recovery-flashable zip for distribution:
 
 ---
 
+## 🧩 Building the SUSFS v1.5.5 Companion Module (`susfs4ksu-v1.5.5.zip`)
+
+The SUSFS kernel driver (`CONFIG_KSU_SUSFS=y`) communicates with userspace via `prctl(0xDEADBEEF)`. Because `susfs4ksu` is version-coupled between the kernel patch (`v1.5.5`) and the userspace binary (`ksu_susfs_arm64`), you can either download the prebuilt [`susfs4ksu-v1.5.5.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/susfs4ksu-v1.5.5.zip) from Releases or package it yourself from upstream [`simonpunk/susfs4ksu`](https://gitlab.com/simonpunk/susfs4ksu/-/tree/kernel-4.19) (`kernel-4.19` branch):
+
+### Option 1: Package Upstream Template + Prebuilt Static Binary (Recommended)
+
+Upstream `simonpunk/susfs4ksu` (`kernel-4.19`) tracks the statically linked `ksu_susfs_arm64` binary (`arm64-v8a`) directly inside `ksu_module_susfs/tools/`. Packaging from it requires only `git` and `zip`:
+
+```bash
+REPO_ROOT="$(pwd)"
+git clone --depth=1 -b kernel-4.19 https://gitlab.com/simonpunk/susfs4ksu.git /tmp/susfs4ksu-4.19
+(cd /tmp/susfs4ksu-4.19/ksu_module_susfs && zip -r9 "$REPO_ROOT/out/susfs4ksu-v1.5.5.zip" .)
+```
+
+> [!TIP]
+> Upstream's `build_ksu_module.sh` runs `zip -r9 ../ksu_module_susfs.zip *`. Using `.` instead of `*` preserves the root dotfiles (`.susfs_*` template markers), matching our release asset `susfs4ksu-v1.5.5.zip`.
+
+### Option 2: Recompile `ksu_susfs_arm64` from C Source (`ndk-build`)
+
+If you modify `ksu_susfs/jni/main.c` or want to compile the userspace binary yourself instead of using `simonpunk`'s tracked binary, install the **Android NDK** (`r27+` / `r28`) and add it to `PATH`:
+
+```bash
+git clone --depth=1 -b kernel-4.19 https://gitlab.com/simonpunk/susfs4ksu.git /tmp/susfs4ksu-4.19
+cd /tmp/susfs4ksu-4.19
+./build_ksu_susfs_tool.sh   # runs ndk-build in ksu_susfs/ (LOCAL_LDFLAGS := -static, APP_ABI := arm64-v8a)
+(cd ksu_module_susfs && zip -r9 /path/to/A21s-KernelSU-Next/out/susfs4ksu-v1.5.5.zip .)
+```
+
+> [!NOTE]
+> Alternatively, some users replace the minimal `ksu_module_susfs` script module with a WebUI community fork such as [`sidex15/susfs4ksu-module`](https://github.com/sidex15/susfs4ksu-module), provided its bundled `ksu_susfs` binary matches kernel SUSFS **v1.5.5**.
+
+---
+
 ## 🎯 Verification & Build Testing
 
 After compilation, verify the produced artifacts before flashing:
@@ -159,6 +192,9 @@ file out/Image
 
 # Check AnyKernel3 zip integrity
 unzip -t out/KernelSU-Next-A21s-universal850-AnyKernel3.zip
+
+# Check SUSFS companion module zip integrity
+unzip -t out/susfs4ksu-v1.5.5.zip
 
 # Check Odin tar integrity
 tar -tvf out/boot-ksu.tar
