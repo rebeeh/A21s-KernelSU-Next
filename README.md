@@ -15,7 +15,7 @@
 
 | I want to… | Go to… |
 | :--- | :--- |
-| Download prebuilt flashable images (v1.1.0) | [GitHub Releases (v1.1.0)](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest) |
+| Download prebuilt flashable images (latest) | [GitHub Releases (latest)](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest) |
 | Flash the kernel right now (no compiling) | [End-User Installation Guide](docs/USER_GUIDE.md) |
 | Build from source | [Kernel Compilation Guide](docs/BUILD.md) |
 | Flash to my device | [📲 Flash to Your Device](#-flash-to-your-device) |
@@ -130,11 +130,11 @@ Choose the method that matches your OS and tools:
 
 | Platform | Recommended Tool | Target File |
 | :--- | :--- | :--- |
-| **Any OS / No PC** | [LineageOS Recovery](https://wiki.lineageos.org/adb_fastboot_guide) or [TWRP](https://twrp.me) | [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.1.0/KernelSU-Next-A21s-universal850-AnyKernel3.zip) |
-| **Windows** | [Samsung Odin3 v3.14+](https://odindownload.com) (Slot: AP) | [`out/boot-ksu.tar`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.1.0/boot-ksu.tar) |
-| **Linux** | [`samloader`](https://github.com/topjohnwu/samloader-rs) | [`out/boot-ksu.img`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.1.0/boot-ksu.img) |
-| **macOS / Linux** | [`heimdall`](https://github.com/Benjamin-Dobell/Heimdall) | [`out/boot-ksu.img`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.1.0/boot-ksu.img) |
-| **Raw Block** | `dd` / fastboot | [`out/boot.img`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.1.0/boot.img) |
+| **Any OS / No PC** | [LineageOS Recovery](https://wiki.lineageos.org/adb_fastboot_guide) or [TWRP](https://twrp.me) | [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/KernelSU-Next-A21s-universal850-AnyKernel3.zip) |
+| **Windows** | [Samsung Odin3 v3.14+](https://odindownload.com) (Slot: AP) | [`out/boot-ksu.tar`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/boot-ksu.tar) |
+| **Linux** | [`samloader`](https://github.com/topjohnwu/samloader-rs) | [`out/boot-ksu.img`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/boot-ksu.img) |
+| **macOS / Linux** | [`heimdall`](https://github.com/Benjamin-Dobell/Heimdall) | [`out/boot-ksu.img`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/boot-ksu.img) |
+| **Raw Block** | `dd` / fastboot | [`out/boot.img`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/boot.img) |
 
 **Quick reference commands:**
 

@@ -200,7 +200,7 @@ If you do have a GitHub account but aren't logged in, GitHub will show its login
 **Steps:**
 1. When the LineageOS updater finishes, **do not tap "Restart"** — boot into Recovery instead.
 2. In Recovery, flash:
-   [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.1.0/KernelSU-Next-A21s-universal850-AnyKernel3.zip)
+   [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/KernelSU-Next-A21s-universal850-AnyKernel3.zip)
 3. Reboot to system. Root and all module permissions are restored.
 
 > [!TIP]
@@ -403,9 +403,9 @@ Every LineageOS nightly or weekly OTA completely overwrites `/boot` with the ups
 
 **The 5-Second Solution:**
 
-1. Keep [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.1.0/KernelSU-Next-A21s-universal850-AnyKernel3.zip) saved on your device storage or microSD card.
+1. Keep [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/KernelSU-Next-A21s-universal850-AnyKernel3.zip) saved on your device storage or microSD card.
 2. When the LineageOS updater finishes, **boot into Recovery** before restarting into system.
-3. Flash [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.1.0/KernelSU-Next-A21s-universal850-AnyKernel3.zip) from Recovery.
+3. Flash [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/KernelSU-Next-A21s-universal850-AnyKernel3.zip) from Recovery.
 4. AnyKernel3 extracts the new LineageOS ramdisk, swaps the kernel `Image`, and repacks the partition on the fly in approximately 5 seconds.
 5. Reboot to system. Root, modules, and all app permissions remain 100% intact.
 

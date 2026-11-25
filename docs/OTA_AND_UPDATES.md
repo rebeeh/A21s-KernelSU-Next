@@ -21,7 +21,7 @@
 - **Device:** Samsung Galaxy A21s (`SM-A217F`)
 - **ROM:** LineageOS 24
 - **Kernel + Root:** KernelSU-Next on Linux 4.19.325 (`universal850`)
-- **Required file (keep it handy):** [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.1.0/KernelSU-Next-A21s-universal850-AnyKernel3.zip) — save this to your phone's internal storage or microSD card before applying any OTA.
+- **Required file (keep it handy):** [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/KernelSU-Next-A21s-universal850-AnyKernel3.zip) — save this to your phone's internal storage or microSD card before applying any OTA.
 
 ---
 
@@ -57,7 +57,7 @@ Because our kernel is built against the **Linux 4.19.325 `universal850`** base �
 2. When Recovery prompts you to reboot, **do not reboot to system yet** — stay in Recovery.  
    *(If you already rebooted to system, long-press Power → reboot into Recovery manually.)*
 3. In Recovery, tap **Install** (or **Apply Update**) → navigate to and select:  
-   [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/download/v1.1.0/KernelSU-Next-A21s-universal850-AnyKernel3.zip)
+   [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/KernelSU-Next-A21s-universal850-AnyKernel3.zip)
 4. Confirm the flash. AnyKernel3 will:
    - Dynamically read the **new** LineageOS ramdisk from the just-updated boot partition.
    - Inject the KernelSU-Next `Image` into it.
