@@ -819,3 +819,31 @@ index b2064554..71a688fe 100644
  
  struct ksu_become_daemon_cmd {
      __u8 token[65]; /* Input: daemon token (null-terminated) */
+diff --git a/kernel/selinux/rules.c b/kernel/selinux/rules.c
+index abcdd75f..69b794fb 100644
+--- a/kernel/selinux/rules.c
++++ b/kernel/selinux/rules.c
+@@ -204,6 +204,23 @@ static int apply_kernelsu_rules_fn(void *ptr)
+     ksu_allow(db, "system_server", KERNEL_SU_DOMAIN, "process", "getpgid");
+     ksu_allow(db, "system_server", KERNEL_SU_DOMAIN, "process", "sigkill");
+ 
++    // Samsung Exynos 850 (a21s) Keymaster DAK access on AOSP/LineageOS ROMs.
++    // Prevents ret -932 on /mnt/vendor/efs/DAK/GAK_RSA.private during Play Integrity attestation.
++    ksu_allow(db, "hal_keymaster_default", "prov_efs_file", "dir", "search");
++    ksu_allow(db, "hal_keymaster_default", "prov_efs_file", "dir", "read");
++    ksu_allow(db, "hal_keymaster_default", "prov_efs_file", "dir", "open");
++    ksu_allow(db, "hal_keymaster_default", "prov_efs_file", "dir", "getattr");
++    ksu_allow(db, "hal_keymaster_default", "prov_efs_file", "file", "read");
++    ksu_allow(db, "hal_keymaster_default", "prov_efs_file", "file", "open");
++    ksu_allow(db, "hal_keymaster_default", "prov_efs_file", "file", "getattr");
++    ksu_allow(db, "hal_keymaster_default", "efs_file", "dir", "search");
++    ksu_allow(db, "hal_keymaster_default", "efs_file", "dir", "read");
++    ksu_allow(db, "hal_keymaster_default", "efs_file", "dir", "open");
++    ksu_allow(db, "hal_keymaster_default", "efs_file", "dir", "getattr");
++    ksu_allow(db, "hal_keymaster_default", "efs_file", "file", "read");
++    ksu_allow(db, "hal_keymaster_default", "efs_file", "file", "open");
++    ksu_allow(db, "hal_keymaster_default", "efs_file", "file", "getattr");
++
+     return 0;
+ }
+ 
