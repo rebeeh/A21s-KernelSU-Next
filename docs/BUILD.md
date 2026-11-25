@@ -1,100 +1,103 @@
-# 🛠️ Kernel Compilation & Build Guide — Galaxy A21s KernelSU-Next
+[← Documentation Hub](README.md) · [Main README](../README.md)
 
-> A comprehensive, step-by-step guide to compiling the **Samsung Galaxy A21s (SM-A217F / Exynos 850)** Linux 4.19 kernel with **KernelSU-Next** and **SUSFS v1.5.5** from source, repacking boot images, and creating flashable distribution archives.
+# Kernel Compilation & Build Guide — Galaxy A21s KernelSU-Next
 
----
-
-## 🗺️ Jump to What You Need
-
-| Method | Environment | Setup Time | Best For |
-|---|---|:---:|---|
-| [Method A — GitHub Actions (Cloud Build)](#️-method-a--github-actions-cloud-build-zero-local-setup) | Any Web Browser | 0 min | Zero setup, prebuilt releases |
-| [Method B — Universal Python CLI](#-method-b--universal-python-cli-cross-platform) | Windows / macOS / Linux | 2 min | Automated local builds & packaging |
-| [Method C — Docker & Docker Compose](#-method-c--docker--compose-reproducible-builds) | Any Docker host | 5 min | Byte-for-byte reproducible builds |
-| [Method D — Native Linux / WSL2](#-method-d--native-linux--wsl2-compilation) | Ubuntu 22.04+ / Arch / Fedora | 15 min | Kernel hackers & active development |
+> Step-by-step instructions for building the **Samsung Galaxy A21s (`SM-A217F` / Exynos 850)** Linux `4.19.325` kernel with **KernelSU-Next** and **SUSFS v1.5.5**, packaging `boot-ksu.img` / `boot-ksu.tar` / `AnyKernel3.zip`, and building the version-matched **`susfs4ksu-v1.5.5.zip`** companion module.
 
 ---
 
-## 📋 Build Architecture Flow
+## Jump to What You Need
+
+| Method / Topic | Environment | Setup Time | Best For |
+| :--- | :--- | :---: | :--- |
+| [Method A: GitHub Actions (Cloud Build)](#method-a-github-actions-cloud-build-zero-local-setup) | Any Web Browser | 0 min | Zero setup, cloud CI artifacts |
+| [Method B: Universal Python CLI (`build.py`)](#method-b-universal-python-cli-cross-platform) | Windows / macOS / Linux | ~2 min | Cross-platform checks, packaging & Docker wrapper |
+| [Method C: Docker & Docker Compose](#method-c-docker--compose-reproducible-builds) | Any Docker host | ~5 min | Reproducible containerized compilation |
+| [Method D: Native Linux / WSL2](#method-d-native-linux--wsl2-compilation) | Ubuntu 22.04+ / Fedora / Arch | ~15 min | Kernel development & patch editing |
+| [Building `susfs4ksu-v1.5.5.zip`](#building-the-susfs-v155-companion-module-susfs4ksu-v155zip) | Git + Zip *(or Android NDK)* | ~1 min | Rebuilding the version-matched SUSFS module |
+| [Verification & Build Testing](#verification--build-testing) | Linux / WSL2 / macOS | ~1 min | Integrity checking every output file before flashing |
+
+---
+
+## Build Architecture Flow
 
 ```mermaid
 flowchart TD
-    A["LineageOS Kernel Source (b8c71b7aecec)"] --> B["KernelSU-Next Legacy (v3.4.0)"]
-    A --> C["SUSFS v1.5.5 non-GKI VFS Patches"]
-    B & C --> D["Manual Hook Injection (fs/ & kernel/)"]
-    D --> E["Google AOSP Clang 12.0.5 (clang-r416183b)"]
-    E --> F["Compiled kernel: Image (ARM64)"]
+    A["LineageOS Kernel Tree<br/>(samsungexynos850 @ b8c71b7aecec)"] --> B["KernelSU-Next Legacy<br/>(v3.4.0-legacy, UAPI 5, KSU 33355)"]
+    A --> C["SUSFS v1.5.5 NON-GKI<br/>(0004-susfs-v1.5.5-kernel-4.19.patch)"]
+    B & C --> D["Manual Hooks, Backports & DAK SELinux<br/>(0001..0003 patches)"]
+    D --> E["AOSP Clang 12.0.5 (clang-r416183b) + LLVM=1"]
+    E --> F["ARM64 Kernel Image (out/Image)"]
     F --> G["magiskboot Repack with LineageOS Ramdisk"]
-    G --> H["boot-ksu.img (Fastboot / samloader)"]
-    G --> I["boot-ksu.tar (Samsung Odin AP)"]
-    F --> J["AnyKernel3 Packaging"]
-    J --> K["KernelSU-Next-AnyKernel3.zip (Recovery)"]
+    G --> H["out/boot-ksu.img"]
+    G --> I["out/boot-ksu.tar (Samsung Odin AP)"]
+    F --> J["AnyKernel3 Packager (scripts/package_anykernel3.sh)"]
+    J --> K["out/KernelSU-Next-A21s-universal850-AnyKernel3.zip"]
 ```
 
 ---
 
-## ⚙️ Prerequisites & Toolchains
+## Prerequisites & Toolchains
 
-Before compiling locally, ensure you have the required components:
-
-| Component | Target / Version | Description |
-|---|---|---|
-| **Base Kernel** | Linux `4.19.325` | LineageOS universal850 tree (`lineage-24.0` / commit `b8c71b7aecec`) |
-| **Toolchain** | Google AOSP Clang `12.0.5` | `clang-r416183b` with integrated LLVM tools (`LLVM=1`) |
-| **Cross Tools** | GCC 9+ / AArch64 | `aarch64-linux-gnu-` and `arm-linux-gnueabi-` (for compat vdso) |
-| **Repacker** | `magiskboot` (v27.0+) | Splits stock `boot.img` and repacks kernel with LineageOS ramdisk |
-| **Distribution** | `AnyKernel3` | Universal recovery installer for ramdisk preservation |
-
----
-
-## ☁️ Method A — GitHub Actions (Cloud Build, Zero Local Setup)
-
-The easiest way to compile without installing multi-gigabyte toolchains locally:
-
-1. Navigate to the repository's [GitHub Actions Build Workflow](https://github.com/rebeeh/A21s-KernelSU-Next/actions/workflows/build-kernel.yml).
-2. Click **Run workflow** on the `main` branch.
-3. The workflow will:
-   - Provision an **Ubuntu 24.04** runner.
-   - Fetch the exact LineageOS 24 kernel tree and AOSP Clang toolchain.
-   - Inject the KernelSU-Next manual hooks, SUSFS v1.5.5 patches, and Samsung VFS adaptations.
-   - Compile the kernel and generate `boot-ksu.img`, `boot-ksu.tar`, and `KernelSU-Next-A21s-universal850-AnyKernel3.zip`.
-4. Download the generated artifacts directly from the workflow summary or the [Releases page](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest).
+| Component | Version / Pin | Reference |
+| :--- | :--- | :--- |
+| **Base Kernel** | Linux `4.19.325` (`b8c71b7aecec`) | [`samsungexynos850/android_kernel_samsung_exynos850`](https://github.com/samsungexynos850/android_kernel_samsung_exynos850/tree/lineage-24.0) (`lineage-24.0`) |
+| **Root Driver** | KernelSU-Next `legacy` (`33355` / UAPI `5`) | [`KernelSU-Next/KernelSU-Next`](https://github.com/KernelSU-Next/KernelSU-Next/tree/legacy) |
+| **SUSFS Extension** | SUSFS `v1.5.5` (`NON-GKI`) | [`simonpunk/susfs4ksu`](https://gitlab.com/simonpunk/susfs4ksu/-/tree/kernel-4.19) (`kernel-4.19`) |
+| **Compiler** | Google AOSP Clang `12.0.5` (`clang-r416183b`) | [`android_prebuilts_clang_kernel_linux-x86_clang-r416183b`](https://github.com/LineageOS/android_prebuilts_clang_kernel_linux-x86_clang-r416183b) |
+| **Repacker** | `magiskboot` (`x86_64`) | [`magiskboot-x86_64/magiskboot`](https://github.com/magiskboot-x86_64/magiskboot) |
+| **Kernel Config** | Exynos 850 KSU + SUSFS defconfig | [`configs/a21s_ksu_defconfig`](../configs/a21s_ksu_defconfig) |
+| **Patch Stack** | Sequential clean patches (`0001`–`0004`) | [`patches/`](../patches/) |
 
 ---
 
-## 🐍 Method B — Universal Python CLI (Cross-Platform)
+## Method A: GitHub Actions (Cloud Build, Zero Local Setup)
 
-The project includes an autonomous build orchestrator [`build.py`](../build.py) that works seamlessly on Windows, macOS, and Linux:
+Run the entire compilation pipeline on GitHub's cloud runners without downloading gigabytes of kernel source or Clang locally:
+
+1. Open [GitHub Actions → Build Kernel](https://github.com/rebeeh/A21s-KernelSU-Next/actions/workflows/build-kernel.yml) (defined in [`.github/workflows/build-kernel.yml`](../.github/workflows/build-kernel.yml)).
+2. Click **Run workflow** on `main`.
+3. The workflow automatically:
+   - Clones `clang-r416183b`, `android_kernel_samsung_exynos850` (`lineage-24.0`), and `KernelSU-Next` (`legacy`) on `ubuntu-24.04`.
+   - Applies [`0001`](../patches/0001-build-host-openssl-3-compat.patch) through [`0004`](../patches/0004-susfs-v1.5.5-kernel-4.19.patch).
+   - Builds `Image` using [`configs/a21s_ksu_defconfig`](../configs/a21s_ksu_defconfig) and packages `boot-ksu.img`, `boot-ksu.tar`, and `KernelSU-Next-A21s-universal850-AnyKernel3.zip`.
+4. Download the artifacts from the workflow summary (or check [GitHub Releases (`latest`)](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest)).
+
+---
+
+## Method B: Universal Python CLI (Cross-Platform)
+
+[`build.py`](../build.py) provides cross-platform tooling on Windows, macOS, and Linux using only Python 3:
 
 ```bash
-# 1. Inspect host toolchain dependencies and environment status
+# 1. Inspect host toolchain dependencies, ADB, and Docker readiness
 python3 build.py doctor
 
-# 2. Package the AnyKernel3 flashable recovery zip
+# 2. Package the AnyKernel3 flashable recovery zip (uses out/Image + tools/anykernel3/)
 python3 build.py package
 
-# 3. Generate the Samsung Odin-compatible boot-ksu.tar package
+# 3. Wrap out/boot-ksu.img into a Samsung Odin AP archive (out/boot-ksu.tar)
 python3 build.py make-tar
 
-# 4. Trigger a hermetic build inside a standardised Docker container
+# 4. Launch a reproducible containerized kernel build via Docker
 python3 build.py docker-build
 
-# 5. Automatically diagnose connected device and capture crash logs
+# 5. Collect Android / Recovery logs (ramoops, dmesg, logcat, ksud) for bug reports
 python3 build.py report-issue
 ```
 
 ---
 
-## 🐳 Method C — Docker & Compose (Reproducible Builds)
+## Method C: Docker & Compose (Reproducible Builds)
 
-Docker eliminates host compiler discrepancies and OpenSSL header version conflicts:
+Using [`Dockerfile`](../Dockerfile) and [`docker-compose.yml`](../docker-compose.yml) eliminates host OS library and OpenSSL discrepancies:
 
-1. Place your target LineageOS stock `boot.img` in the repository root directory.
-2. Build the container and compile:
+1. Place your baseline LineageOS 24 `boot.img` in the repository root.
+2. Build and compile:
    ```bash
    docker compose up --build
    ```
-3. Artifacts are automatically deposited in the `out/` folder:
+3. Check the generated files in `out/`:
    - `out/Image`
    - `out/boot-ksu.img`
    - `out/boot-ksu.tar`
@@ -102,9 +105,9 @@ Docker eliminates host compiler discrepancies and OpenSSL header version conflic
 
 ---
 
-## 🐧 Method D — Native Linux / WSL2 Compilation
+## Method D: Native Linux / WSL2 Compilation
 
-For active developers hacking on kernel drivers and manual hooks:
+Recommended for active kernel developers editing [`patches/`](../patches/) or [`configs/a21s_ksu_defconfig`](../configs/a21s_ksu_defconfig).
 
 ### Step 1: Install Host Dependencies
 
@@ -116,7 +119,7 @@ sudo apt-get update && sudo apt-get install -y \
 
 ### Step 2: Run Environment Setup
 
-The [`scripts/setup_env.sh`](../scripts/setup_env.sh) script automatically clones the AOSP Clang toolchain, fetches `magiskboot`, and applies host OpenSSL patches:
+[`scripts/setup_env.sh`](../scripts/setup_env.sh) prepares `build/` (clones `clang-r416183b`, downloads `magiskboot`, clones `android_kernel_samsung_exynos850` and `KernelSU-Next`, links `drivers/kernelsu`, and applies [`0001`](../patches/0001-build-host-openssl-3-compat.patch)–[`0004`](../patches/0004-susfs-v1.5.5-kernel-4.19.patch)):
 
 ```bash
 chmod +x scripts/*.sh
@@ -125,22 +128,21 @@ chmod +x scripts/*.sh
 
 ### Step 3: Compile and Repack
 
-Run [`scripts/build.sh`](../scripts/build.sh) pointing to your baseline `boot.img`:
+Run [`scripts/build.sh`](../scripts/build.sh) passing your baseline LineageOS `boot.img`:
 
 ```bash
 ./scripts/build.sh boot.img
 ```
 
-The build script will:
-1. Export architecture variables (`ARCH=arm64`, `SUBARCH=arm64`, `CROSS_COMPILE=aarch64-linux-gnu-`).
-2. Point compiler flags to Clang 12 (`CC=clang`, `LLVM=1`).
-3. Load [`configs/a21s_ksu_defconfig`](../configs/a21s_ksu_defconfig).
-4. Build `Image` with manual hook mode (`CONFIG_KSU_MANUAL_HOOK=y`).
-5. Repack with `magiskboot` and output `out/boot-ksu.img` and `out/boot-ksu.tar`.
+[`scripts/build.sh`](../scripts/build.sh) performs the following steps:
+1. Exports `ARCH=arm64`, `SUBARCH=arm64`, `CROSS_COMPILE=aarch64-linux-gnu-`, and Clang 12 flags (`CC=clang`, `LLVM=1`).
+2. Syncs [`configs/a21s_ksu_defconfig`](../configs/a21s_ksu_defconfig) (`CONFIG_KSU=y`, `CONFIG_KSU_MANUAL_HOOK=y`, `CONFIG_KSU_SUSFS=y`).
+3. Builds `arch/arm64/boot/Image` and copies it to `out/Image`.
+4. Splits your baseline `boot.img` with `magiskboot` and repacks `out/boot-ksu.img` + `out/boot-ksu.tar`.
 
-### Step 4: Package AnyKernel3 Zip
+### Step 4: Package `AnyKernel3` Zip
 
-To package a recovery-flashable zip for distribution:
+Run [`scripts/package_anykernel3.sh`](../scripts/package_anykernel3.sh) to build the recovery installer zip using [`tools/anykernel3/anykernel.sh`](../tools/anykernel3/anykernel.sh):
 
 ```bash
 ./scripts/package_anykernel3.sh
@@ -148,9 +150,9 @@ To package a recovery-flashable zip for distribution:
 
 ---
 
-## 🧩 Building the SUSFS v1.5.5 Companion Module (`susfs4ksu-v1.5.5.zip`)
+## Building the SUSFS v1.5.5 Companion Module (`susfs4ksu-v1.5.5.zip`)
 
-The SUSFS kernel driver (`CONFIG_KSU_SUSFS=y`) communicates with userspace via `prctl(0xDEADBEEF)`. Because `susfs4ksu` is version-coupled between the kernel patch (`v1.5.5`) and the userspace binary (`ksu_susfs_arm64`), you can either download the prebuilt [`susfs4ksu-v1.5.5.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/susfs4ksu-v1.5.5.zip) from Releases or package it yourself from upstream [`simonpunk/susfs4ksu`](https://gitlab.com/simonpunk/susfs4ksu/-/tree/kernel-4.19) (`kernel-4.19` branch):
+The SUSFS kernel driver (`CONFIG_KSU_SUSFS=y`) communicates with userspace via `prctl(0xDEADBEEF)`. Because `susfs4ksu` is version-coupled between the kernel patch (`v1.5.5`) and the userspace binary (`ksu_susfs_arm64`), you can either download [`susfs4ksu-v1.5.5.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/susfs4ksu-v1.5.5.zip) from Releases or package it yourself from upstream [`simonpunk/susfs4ksu`](https://gitlab.com/simonpunk/susfs4ksu/-/tree/kernel-4.19) (`kernel-4.19` branch):
 
 ### Option 1: Package Upstream Template + Prebuilt Static Binary (Recommended)
 
@@ -170,10 +172,11 @@ git clone --depth=1 -b kernel-4.19 https://gitlab.com/simonpunk/susfs4ksu.git /t
 If you modify `ksu_susfs/jni/main.c` or want to compile the userspace binary yourself instead of using `simonpunk`'s tracked binary, install the **Android NDK** (`r27+` / `r28`) and add it to `PATH`:
 
 ```bash
+REPO_ROOT="$(pwd)"
 git clone --depth=1 -b kernel-4.19 https://gitlab.com/simonpunk/susfs4ksu.git /tmp/susfs4ksu-4.19
 cd /tmp/susfs4ksu-4.19
 ./build_ksu_susfs_tool.sh   # runs ndk-build in ksu_susfs/ (LOCAL_LDFLAGS := -static, APP_ABI := arm64-v8a)
-(cd ksu_module_susfs && zip -r9 /path/to/A21s-KernelSU-Next/out/susfs4ksu-v1.5.5.zip .)
+(cd ksu_module_susfs && zip -r9 "$REPO_ROOT/out/susfs4ksu-v1.5.5.zip" .)
 ```
 
 > [!NOTE]
@@ -181,35 +184,37 @@ cd /tmp/susfs4ksu-4.19
 
 ---
 
-## 🎯 Verification & Build Testing
+## Verification & Build Testing
 
-After compilation, verify the produced artifacts before flashing:
+Before flashing any output artifact, verify image format, archive integrity, and partition size limit (`<= 37,748,736` bytes / `36 MiB`):
 
 ```bash
-# Check kernel image format and architecture
+# 1. Check kernel image format and architecture
 file out/Image
 # Expected: Linux kernel ARM64 boot executable Image, little-endian
 
-# Check AnyKernel3 zip integrity
-unzip -t out/KernelSU-Next-A21s-universal850-AnyKernel3.zip
+# 2. Check boot-ksu.img fits within the 36 MiB SM-A217F partition limit
+stat -c '%n: %s bytes' out/boot-ksu.img
 
-# Check SUSFS companion module zip integrity
+# 3. Check AnyKernel3 & SUSFS companion zip integrity
+unzip -t out/KernelSU-Next-A21s-universal850-AnyKernel3.zip
 unzip -t out/susfs4ksu-v1.5.5.zip
 
-# Check Odin tar integrity
+# 4. Check Odin tar structure
 tar -tvf out/boot-ksu.tar
 # Expected: boot.img inside archive
 ```
 
 ---
 
-## 🔗 Related Documentation
+## Related Docs
 
 | Document | Description |
-|---|---|
-| [📖 User Installation Guide](USER_GUIDE.md) | How to flash prebuilt releases onto your phone |
-| [⚡ Flashing Methods Guide](FLASHING_GUIDE.md) | Detailed walkthrough for AnyKernel3, Odin, samloader, and Heimdall |
-| [🏗️ Technical Architecture](ARCHITECTURE.md) | Deep dive on Exynos 850 TrustZone, TZASC bypass, and manual hooks |
-| [🛠️ Troubleshooting & Diagnostics](TROUBLESHOOTING.md) | Diagnose bootloops, extract logs, and resolve issues |
-| [🤝 Contributing Guidelines](CONTRIBUTING.md) | How to submit patches, test variants, and improve docs |
-| [📚 Documentation Hub](README.md) | Master index of all guides and resources |
+| :--- | :--- |
+| [User Installation Guide](USER_GUIDE.md) | Flash prebuilt releases and configure the stealth module stack |
+| [Flashing Methods Guide](FLASHING_GUIDE.md) | Detailed walkthrough for AnyKernel3, `samloader`, Odin, and Heimdall |
+| [OTA Updates Survival](OTA_AND_UPDATES.md) | Keep root across LineageOS updates without recompiling |
+| [Technical Architecture](ARCHITECTURE.md) | Deep dive on Exynos 850 TZASC, Manual Hooks, UAPI 5, and SUSFS |
+| [Troubleshooting & Diagnostics](TROUBLESHOOTING.md) | Diagnose bootloops, pull `ramoops`/`dmesg`, and resolve issues |
+| [Contributing Guidelines](CONTRIBUTING.md) | Export clean patches, test changes, and submit pull requests |
+| [Documentation Hub](README.md) | Master index of all guides and upstream links |

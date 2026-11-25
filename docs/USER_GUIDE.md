@@ -1,236 +1,197 @@
-# 📖 User Guide — KernelSU-Next on Galaxy A21s
+[← Documentation Hub](README.md) · [Main README](../README.md)
 
-**TL;DR:** Flash a pre-built KernelSU-Next kernel onto your Samsung Galaxy A21s (SM-A217F) running LineageOS 24, install the manager app, and get kernel-level root — no compilation required.
+# User Guide — KernelSU-Next on Galaxy A21s
+
+> **TL;DR:** Flash a prebuilt KernelSU-Next + SUSFS kernel onto your **Samsung Galaxy A21s (`SM-A217F`)** running **LineageOS 24**, install the manager app, and configure per-app root + stealth — no compilation needed.
 
 ---
 
-## 🗺️ Jump to What You Need
+## Jump to What You Need
 
-| I want to… | Go to |
+| I want to… | Go to… |
 | :--- | :--- |
-| Download the files | [📦 Downloads](#-downloads) |
-| Check if my ROM is supported | [📱 ROM Compatibility](#-rom--boot-image-compatibility-matrix) |
-| Flash using recovery (easiest, no PC) | [Method 1 — Recovery Flash](#method-1-recovery-flash-recommended--no-pc-needed) |
-| Flash using `samloader` on Linux/Mac | [Method 2 — samloader](#method-2-flash-via-samloader-linux--mac) |
-| Flash using Odin on Windows | [Method 3 — Odin](#method-3-flash-via-odin-windows) |
-| Install the manager & grant root | [🔑 Setting Up the Manager](#-setting-up-the-manager--granting-root) |
-| Understand why root checkers show "not installed" | [🔒 Root Checker Note](#-why-root-checker-shows-not-properly-installed-at-first) |
+| Check device & ROM prerequisites | [Before You Begin](#before-you-begin) |
+| Download the prebuilt release files | [Downloads](#downloads) |
+| Check if my ROM works (`LineageOS 24` vs other ROMs vs `OneUI`) | [ROM & Boot Image Compatibility Matrix](#rom--boot-image-compatibility-matrix) |
+| Flash via Recovery (easiest, no PC) | [Method 1: Recovery Flash](#method-1-recovery-flash-recommended--no-pc-needed) |
+| Flash via `samloader` (Linux / macOS) | [Method 2: Flash via `samloader`](#method-2-flash-via-samloader-linux--macos) |
+| Flash via Odin (Windows) | [Method 3: Flash via Odin](#method-3-flash-via-odin-windows) |
+| Verify root & grant access to apps | [Setting Up the Manager & Granting Root](#setting-up-the-manager--granting-root) |
+| Set up `SUSFS`, `ReZygisk`, `Vector`, `HMA-OSS`, and `AlwaysStrong` | [Advanced Module Setup & Stealth Isolation Stack](#advanced-module-setup--stealth-isolation-stack) |
 
 ---
 
-## 🛠️ Before You Begin
+## Before You Begin
 
-Before flashing anything, make sure you have all of the following in place:
+Ensure all of the following are ready before flashing:
 
-- **Device:** Samsung Galaxy A21s (`SM-A217F`)
-- **ROM:** LineageOS 24 (Android 17) installed and booting correctly
+- **Device:** Samsung Galaxy A21s (`SM-A217F`, `SM-A217M`, or `SM-A217N`) with an **unlocked bootloader**.
+- **ROM:** [LineageOS 24](https://github.com/LineageOS/android_device_samsung_a21s) (Android 17 / SDK 37) installed and booting normally.
   > [!WARNING]
-  > Stock Samsung OneUI (OneUI 2, 3, or 4) is **not supported**. The kernel ABI is incompatible. Do not attempt to flash on stock firmware.
-- **Recovery** (for Method 1): [TWRP](https://twrp.me), [OrangeFox](https://orangefox.download), or Lineage Recovery already installed
-- **USB debugging** enabled *(Settings → About Phone → tap Build Number 7× → Developer Options → USB Debugging)*
-- **ADB** installed on your PC if you plan to use a PC method — [platform-tools download](https://developer.android.com/tools/releases/platform-tools)
-- A **full backup** of your data — flashing a kernel carries a small risk; always back up first
+  > Stock Samsung OneUI (OneUI 2, 3, or 4) is **not supported**. The kernel ABI and proprietary Samsung security modules are incompatible — do not flash on stock OneUI.
+- **Recovery** *(for Method 1)*: Lineage Recovery, [TWRP](https://twrp.me), or [OrangeFox](https://orangefox.download).
+- **USB Debugging & ADB** *(for PC methods / log capture)*: Enable via *Settings → About Phone → tap Build Number 7× → Developer Options → USB Debugging*, with [Android SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools) installed.
+- **Backup:** Copy your stock `boot.img` off-device before making changes.
 
 ---
 
-## 📦 Downloads
+## Downloads
 
-Download the latest pre-compiled release files from the [GitHub Releases](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest) page:
+Download the latest release assets from [GitHub Releases (`latest`)](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest):
 
-| File | Purpose | Flashing Tool |
+| File | Purpose | Flash / Install With |
 | :--- | :--- | :--- |
-| [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/KernelSU-Next-A21s-universal850-AnyKernel3.zip) | Flashable ZIP — easiest method, works with any AOSP ROM | Lineage Recovery / [TWRP](https://twrp.me) / [OrangeFox](https://orangefox.download) |
-| [`boot-ksu.tar`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/boot-ksu.tar) | Odin AP package — for Windows users | [Samsung Odin](https://odindownload.com) |
-| [`boot-ksu.img`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/boot-ksu.img) | Raw boot partition image — for Linux/Mac users | [`samloader`](https://github.com/topjohnwu/samloader-rs) / [`heimdall`](https://github.com/Benjamin-Dobell/Heimdall) |
-| [`boot.img`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/boot.img) | Standard boot partition image — for block flashing (`dd`) | Terminal / Root Shell |
-| [`susfs4ksu-v1.5.5.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/susfs4ksu-v1.5.5.zip) | Version-matched SUSFS `v1.5.5` userspace companion (`ksu_susfs_arm64`) | KernelSU-Next Manager → Modules |
-| [`KernelSU_Next_v3.4.2.apk`](https://github.com/KernelSU-Next/KernelSU-Next/releases/download/v3.4.2/KernelSU_Next_v3.4.2.apk) | Official KernelSU-Next root manager app | Android Package Installer / ADB |
+| [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/KernelSU-Next-A21s-universal850-AnyKernel3.zip) | Flashable recovery ZIP — preserves your existing ROM ramdisk *(Recommended)* | Lineage Recovery / [TWRP](https://twrp.me) / [OrangeFox](https://orangefox.download) |
+| [`boot-ksu.tar`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/boot-ksu.tar) | Odin AP archive (`boot.img` wrapped for Windows flashing) | [Samsung Odin](https://odindownload.com) |
+| [`boot-ksu.img`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/boot-ksu.img) | Raw patched boot partition image (`36 MiB` LineageOS 24 ramdisk) | [`samloader`](https://github.com/topjohnwu/samloader-rs) / [`heimdall`](https://github.com/Benjamin-Dobell/Heimdall) / `dd` |
+| [`susfs4ksu-v1.5.5.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/susfs4ksu-v1.5.5.zip) | Version-matched [SUSFS v1.5.5](BUILD.md#building-the-susfs-v155-companion-module-susfs4ksu-v155zip) userspace module (`ksu_susfs_arm64`) | KernelSU-Next Manager → **Modules** |
+| [`KernelSU_Next_v3.4.2.apk`](https://github.com/KernelSU-Next/KernelSU-Next/releases/download/v3.4.2/KernelSU_Next_v3.4.2.apk) | Official [KernelSU-Next Manager](https://github.com/KernelSU-Next/KernelSU-Next/releases/tag/v3.4.2) app (`UAPI 5` aligned) | Android Installer / `adb install` |
 
 > [!TIP]
-> **Not sure which file to grab?** If you're on LineageOS 24 and just want the simplest path, download the `.zip` and the `.apk` — that's all you need for Method 1.
+> **Minimal first-time download:** On LineageOS 24 with recovery access, grab [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/KernelSU-Next-A21s-universal850-AnyKernel3.zip), [`KernelSU_Next_v3.4.2.apk`](https://github.com/KernelSU-Next/KernelSU-Next/releases/download/v3.4.2/KernelSU_Next_v3.4.2.apk), and (for hiding/Play Integrity) [`susfs4ksu-v1.5.5.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/susfs4ksu-v1.5.5.zip).
 
 ---
 
-## 📱 ROM & Boot Image Compatibility Matrix
+## ROM & Boot Image Compatibility Matrix
 
 | ROM | AnyKernel3 Zip | `boot-ksu.img` / `boot-ksu.tar` | Notes |
 | :--- | :---: | :---: | :--- |
-| **LineageOS 24 (Android 17)** | ✅ Supported | ✅ Supported | Native target ROM. The prebuilt `boot-ksu.img` was built against the LineageOS 24 ramdisk. |
-| **Other AOSP ROMs** (crDroid, PixelOS, LineageOS 20/21) | ✅ Supported | ⚠️ Requires Repack | Flash via the **AnyKernel3 Zip** in recovery — it preserves your ROM's own ramdisk. Do **not** flash `boot-ksu.img` directly on these ROMs. |
-| **Stock Samsung OneUI** (OneUI 2, 3, 4) | ❌ Not Compatible | ❌ Not Compatible | Incompatible kernel ABI. Stock OneUI requires Samsung's proprietary DEFEX, Knox, and 32-bit Binder IPC drivers. |
+| **LineageOS 24 (Android 17)** | Supported | Supported | Native target ROM. Prebuilt `boot-ksu.img` includes the LineageOS 24 ramdisk. |
+| **Other AOSP ROMs** (crDroid, PixelOS, LineageOS 20/21) | Supported | Requires Repack | Always use **AnyKernel3 Zip** in recovery so your ROM's own ramdisk is preserved. Do **not** flash `boot-ksu.img` directly. |
+| **Stock Samsung OneUI** (OneUI 2, 3, 4) | Incompatible | Incompatible | Incompatible kernel ABI, Knox/DEFEX, and Samsung proprietary drivers. |
 
 > [!IMPORTANT]
-> If you are on **any ROM other than LineageOS 24**, always use the **AnyKernel3 Zip** method (Method 1). Flashing the raw `boot-ksu.img` on a different ROM will brick your boot partition.
+> If you are on **any ROM other than LineageOS 24**, always use **Method 1 (AnyKernel3 Zip)**. Flashing a mismatched `boot-ksu.img` will fail to boot.
 
 ---
 
-## ⚡ Installation Methods
+## Installation Methods
 
 ### Method 1: Recovery Flash (Recommended — No PC needed!)
 
-This is the easiest method. It works on-device using TWRP, OrangeFox, or Lineage Recovery.
-
-1. Copy `KernelSU-Next-A21s-universal850-AnyKernel3.zip` to your phone's internal storage or SD card.
-2. Reboot into Recovery using one of the following:
-   - **Hardware keys:** Power off the phone, then hold `Volume Up` + `Power` simultaneously until the recovery screen appears.
-   - **ADB (if phone is on and USB-connected):**
-     ```bash
-     adb reboot recovery
-     ```
-3. Flash the zip file from within your recovery:
-   - **[TWRP](https://twrp.me) or [OrangeFox](https://orangefox.download):**
-     1. Tap **Install**.
-     2. Navigate to and select `KernelSU-Next-A21s-universal850-AnyKernel3.zip`.
-     3. Swipe to Flash.
-   - **Lineage Recovery:**
-     1. Tap **Apply update** → **Apply from ADB**.
-     2. On your PC, run:
-        ```bash
-        adb sideload KernelSU-Next-A21s-universal850-AnyKernel3.zip
-        ```
+1. Copy [`KernelSU-Next-A21s-universal850-AnyKernel3.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/KernelSU-Next-A21s-universal850-AnyKernel3.zip) onto internal storage or a microSD card.
+2. Reboot to Recovery:
+   - **Keys:** Power off → hold **Volume Up + Power** until recovery loads.
+   - **ADB:** `adb reboot recovery`
+3. Install the zip:
+   - **[TWRP](https://twrp.me) / [OrangeFox](https://orangefox.download):** Tap **Install** → select the zip → swipe to flash.
+   - **LineageOS Recovery:** Tap **Apply update** → **Choose from internal storage** (or **Apply from ADB** + `adb sideload KernelSU-Next-A21s-universal850-AnyKernel3.zip`).
      > [!NOTE]
-     > If Lineage Recovery prompts **"Signature verification failed. Install anyway?"**, choose **Yes** — this is expected for third-party zips.
-4. Once flashing completes, tap **Reboot system now**.
+     > If Lineage Recovery shows *"Signature verification failed. Install anyway?"*, tap **Yes** — expected for custom kernels.
+4. Tap **Reboot system now**.
 
 ---
 
-### Method 2: Flash via [`samloader`](https://github.com/topjohnwu/samloader-rs) (Linux / Mac)
+### Method 2: Flash via `samloader` (Linux / macOS)
 
-Use this method if you are on Linux or macOS and prefer a command-line tool.
+Uses [`samloader`](https://github.com/topjohnwu/samloader-rs) (see [Flashing Guide](FLASHING_GUIDE.md) for [`heimdall`](https://github.com/Benjamin-Dobell/Heimdall) and raw `dd` steps):
 
-1. Put the phone into Download Mode:
-   ```bash
-   adb reboot download
-   ```
-2. Flash the boot image:
+1. Enter Download Mode (`adb reboot download`, or power off → hold **Volume Up + Volume Down** while plugging USB cable).
+2. Flash [`boot-ksu.img`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/boot-ksu.img):
    ```bash
    samloader flash --partition BOOT boot-ksu.img
    ```
-3. The phone will reboot automatically once flashing is complete.
-
-> [!NOTE]
-> Alternatively, you can use [`heimdall`](https://github.com/Benjamin-Dobell/Heimdall) with `boot-ksu.img` if you prefer that tool.
+3. The phone reboots automatically.
 
 ---
 
 ### Method 3: Flash via Odin (Windows)
 
-Use this method if you are on Windows.
-
-1. Put the phone into Download Mode (power off, then hold `Volume Down` + `Bixby` + `USB connected`, or run `adb reboot download`).
-2. Launch **[Odin3 v3.14.4](https://odindownload.com)** on your PC.
-3. Verify that your phone appears under the `ID:COM` section in Odin (it should show a blue box with a port number).
-4. Click the **AP** button and select `boot-ksu.tar`.
-5. Click **Start** and wait for the green **`PASS!`** message — your phone will reboot automatically.
+1. Enter Download Mode (power off → hold **Volume Up + Volume Down** while plugging USB cable, or run `adb reboot download`).
+2. Launch [Odin3 v3.14+](https://odindownload.com) on Windows and confirm a blue `ID:COM` port box appears.
+3. Click **AP** and select [`boot-ksu.tar`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/boot-ksu.tar).
+4. Click **Start** and wait for the green **`PASS!`** indicator before unplugging.
 
 > [!CAUTION]
-> Do **not** enable any extra Odin options (Re-Partition, Auto-Reboot toggling, etc.). Use the default Odin settings to avoid unintended side effects.
+> Leave **Re-Partition** unchecked in Odin — checking it can corrupt your partition table.
 
 ---
 
-## 🔑 Setting Up the Manager & Granting Root
+## Setting Up the Manager & Granting Root
 
-After your phone has booted into LineageOS 24 with the new kernel, install the KernelSU-Next manager app:
-
-1. Install the Manager APK using **one** of these two ways:
-   - **Via ADB (PC required):**
-     ```bash
-     adb install KernelSU_Next_v3.4.2.apk
-     ```
-   - **Directly on the phone:** [Download `KernelSU_Next_v3.4.2.apk`](https://github.com/KernelSU-Next/KernelSU-Next/releases/download/v3.4.2/KernelSU_Next_v3.4.2.apk) in your phone's browser and open it to install.
-
-2. Open the **KernelSU Next** app.
-3. Confirm the kernel is active — you should see:
+1. Install [`KernelSU_Next_v3.4.2.apk`](https://github.com/KernelSU-Next/KernelSU-Next/releases/download/v3.4.2/KernelSU_Next_v3.4.2.apk) (`adb install KernelSU_Next_v3.4.2.apk` or tap the APK on-device).
+2. Open **KernelSU Next** and confirm the dashboard reports:
    - **Status:** `Working [BUILT-IN (GKI1)]`
    - **Hook mode:** `Manual`
-4. Tap the **Superuser (Shield)** icon in the bottom navigation bar to manage root access for your apps.
+   - **Manager / Driver:** `v3.4.2 (33355-5)`
+   - **SuSFS version:** `Supported | v1.5.5 (NON-GKI)` *(once [`susfs4ksu-v1.5.5.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/susfs4ksu-v1.5.5.zip) is flashed under **Modules**)*
+3. Use the **Superuser (Shield)** tab to grant root only to apps you explicitly trust.
 
 > [!TIP]
-> If the status does not show `Working`, double-check that the kernel was flashed correctly by repeating the installation step and rebooting again.
+> If the app does not show `Working`, verify you flashed onto a supported LineageOS/AOSP ROM and check [Troubleshooting — Issue 1](TROUBLESHOOTING.md#issue-1-manager-shows-unsupported--not-integrated).
 
 ---
 
-## 🔒 Why Root Checker Shows "Not Properly Installed" at First
+## Why Root Checker Shows "Not Properly Installed" at First
 
-If you install a root detection app like **Root Checker Basic** from the Play Store and open it immediately after setup, it will show:
+If an unprivileged app checks for `/system/bin/su`, the KernelSU-Next kernel driver returns `-ENOENT` (`File Not Found`) by default.
 
-> ❌ *"Sorry! Root access is not properly installed on this device."*
-
-**This is completely normal and by design.** Here is why:
-
-### KernelSU-Next vs. Magisk: Two Different Security Models
-
-| | Magisk (Legacy) | KernelSU-Next |
+| Security Property | Magisk (Global `su`) | KernelSU-Next (Kernel Allowlist) |
 | :--- | :--- | :--- |
-| **How root is exposed** | Installs `/system/bin/su` globally — any app can see it | Hides `su` at the kernel level from all unapproved apps |
-| **What an unapproved app sees** | Root present (detectable) | `-ENOENT` (File Not Found) — looks completely unrooted |
-| **Banking apps / Google Wallet** | Often detected and blocked | Run natively without detection |
-| **Security model** | Global, opt-out | Per-app allowlist, opt-in |
+| **How `su` is exposed** | Mounted globally; requires denylist exclusions | Hidden in kernel space for every non-granted UID |
+| **Unapproved apps see** | Root markers unless hidden per-app | `-ENOENT` — appears 100% unrooted |
+| **Model** | Opt-out (blocklist) | Strict opt-in (allowlist) |
 
-KernelSU-Next uses a **kernel driver** that completely hides `su` and all root capabilities from any app that has not been explicitly granted access. When an unapproved app checks for root, the kernel returns `-ENOENT` (File Not Found) — the app believes the device is 100% unrooted.
-
-### How to Grant Root Access to an App
-
-1. Open the **KernelSU Next** app.
-2. Tap the **Superuser (Shield)** tab at the bottom.
-3. Locate the app you want to grant root to (e.g., **Root Checker Basic**).
-4. Tap the app entry and toggle **Superuser** to **ON**.
-5. Switch back to that app — it will now have full root permissions:
-   > ✅ *"Congratulations! Root access is properly installed on this device!"*
+To grant root to an app: open **KernelSU Next** → **Superuser (Shield)** → tap the app → toggle **Superuser** **ON**.
 
 > [!NOTE]
-> This per-app grant system is what keeps banking apps, Google Wallet, games, and work profiles running without root detection — only apps you explicitly trust ever know root exists.
+> For `adb shell su`, grant **Shell** (`com.android.shell`, UID 2000) under **Show system apps** or toggle **ADB Root** in Manager settings — see [Troubleshooting — Blindspot 1](TROUBLESHOOTING.md#blindspot-1-adb-shell-su-fails).
 
 ---
 
-## 🧩 Advanced Module Setup & Stealth Isolation Stack
+## Advanced Module Setup & Stealth Isolation Stack
 
-For users needing high-security app isolation, banking app stealth, and hooking capabilities, the validated module stack on this kernel includes:
+For banking apps, Xposed modules, and passing Play Integrity (`BASIC` / `DEVICE` / `STRONG_INTEGRITY`), install the validated module stack via **KernelSU Next → Modules**:
 
 ```mermaid
 flowchart TD
-    KSU["KernelSU-Next Legacy + SUSFS v1.5.5<br/>(Ring-0 Kernel Stealth)"] --> RZ["ReZygisk<br/>(Zygote Tracer Injection)"]
-    RZ --> VEC["Vector v2.2<br/>(Modern Stealth Xposed Hooking)"]
-    RZ --> HMA["HMA-OSS<br/>(Hide My Applist Package Concealment)"]
-    RZ --> DET["Zygisk Detach<br/>(Play Store Auto-Update Unbinding)"]
-    HMA --> APP["Target App<br/>(Sees Enforcing SELinux, Clean Mounts & No Root)"]
+    KSU["KernelSU-Next Legacy + SUSFS v1.5.5<br/>(Ring-0 Kernel & DAK SELinux + prctl Stealth)"] --> MOD["susfs4ksu-v1.5.5.zip<br/>(ksu_susfs_arm64 Userspace Rules)"]
+    KSU --> RZ["ReZygisk<br/>(Zygote Tracer Injection)"]
+    RZ --> VEC["Vector<br/>(Modern Stealth Xposed Hooking)"]
+    RZ --> HMA["HMA-OSS<br/>(App List Concealment)"]
+    RZ --> DET["zygisk-detach<br/>(Play Store Detach)"]
+    RZ --> AS["AlwaysStrong<br/>(All-in-One Play Integrity: TEESimulator + autopif4 + Keybox)"]
+    HMA & AS --> APP["Target Apps & Play Services<br/>(Enforcing SELinux, Clean Mounts, Strong Integrity)"]
 ```
 
-### Module Stack Verification Checklist
+### Validated Modules
 
-1. **[ReZygisk](https://github.com/PerformanC/ReZygisk)**: Provides the Zygisk API foundation via ptrace tracer injection.
-   - Verify: `adb shell cat /data/adb/modules/rezygisk/module.prop` shows `[Monitor: ✅, ReZygisk 64-bit: ✅, ReZygisk 32-bit: ✅]`.
-   - *Note on Manager badge:* KernelSU Manager displays an informational `ZYGISK REQUIRED` chip because ReZygisk injects into zygote without modifying the Manager process environment. This does **not** affect functionality.
-2. **[Vector](https://github.com/JingMatrix/Vector) (Modern Xposed Framework)**: Replaces legacy LSPosed with clean in-memory hooking.
-   - Manager APK can be installed via ADB (`org.matrix.vector.manager`).
-3. **[HMA-OSS](https://github.com/frknkrc44/HMA-OSS) (Hide My Applist)**: Pre-configured via `HMA-OSS_config.json` to hide root managers, Vector, and framework packages.
-   - Profile permissions can be set in KernelSU Manager or with `ksud profile set`.
-4. **[zygisk-detach](https://github.com/j-hc/zygisk-detach)**: Detaches target applications from Google Play Store update checks to prevent unintended background upgrades.
-5. **Play Integrity ([AlwaysStrong](https://gitlab.com/Evokerr/AlwaysStrong/-/releases) — All-in-One)**:
-   - Use **[AlwaysStrong](https://gitlab.com/Evokerr/AlwaysStrong/-/releases)** (`AlwaysStrong-v1.0.6.1.zip`) as the single all-in-one Play Integrity module (bundles `TEESimulator`, `autopif4`, keybox fetching, and WebUI management).
-   - **Do not install redundant integrity modules** (`PlayIntegrityFix` / `PlayIntegrityFork`, standalone `Tricky Store`, `Yurikey`) alongside AlwaysStrong, as they duplicate hooks and conflict.
-   - Note: `MEETS_STRONG_INTEGRITY` passes out of the box when AlwaysStrong fetches an active keybox, or you can import a personal private OEM `keybox.xml` via its WebUI.
+1. **[SUSFS Companion (`susfs4ksu-v1.5.5.zip`)](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/susfs4ksu-v1.5.5.zip):** Installs `ksu_susfs_arm64` to configure boot-time mount/path hiding matching the `v1.5.5` kernel hooks. *(See [Build Guide](BUILD.md#building-the-susfs-v155-companion-module-susfs4ksu-v155zip) to build from source.)*
+2. **[ReZygisk](https://github.com/PerformanC/ReZygisk):** Standalone Zygisk API via ptrace tracer injection.
+   - Verify: `adb shell cat /data/adb/modules/rezygisk/module.prop` reports `[Monitor: ✅, ReZygisk 64-bit: ✅, ReZygisk 32-bit: ✅]`.
+   - *Note:* An informational `ZYGISK REQUIRED` badge inside KernelSU-Next Manager is harmless — see [Troubleshooting — Issue 6](TROUBLESHOOTING.md#issue-6-manager-shows-zygisk-required-badge-on-active-modules).
+3. **[Vector](https://github.com/JingMatrix/Vector):** Modern stealth Xposed framework replacing legacy LSPosed.
+4. **[HMA-OSS](https://github.com/frknkrc44/HMA-OSS):** Conceals root manager, Vector, and Xposed apps from targeted packages via a hide template.
+5. **[zygisk-detach](https://github.com/j-hc/zygisk-detach):** Unbinds selected apps from Play Store auto-updates.
+6. **[AlwaysStrong](https://gitlab.com/Evokerr/AlwaysStrong/-/releases) (All-in-One Play Integrity):** Bundles `TEESimulator`, `autopif4`, keybox fetching, and a WebUI dashboard.
 
-### Verifying Stealth with Duck Detector
+> [!IMPORTANT]
+> **Do not install duplicate Play Integrity modules** (`PlayIntegrityFix` / `PlayIntegrityFork`, standalone `Tricky Store`, or `Yurikey`) alongside **AlwaysStrong** — duplicate modules hook the same binder/keystore paths and conflict. Our kernel already embeds the Samsung `hal_keymaster_default` DAK SELinux rules (`ret -932` fix), so `MEETS_BASIC`, `MEETS_DEVICE`, and `MEETS_STRONG_INTEGRITY` pass cleanly once AlwaysStrong fetches an active keybox (or after loading your private OEM `keybox.xml`).
 
-You can use **Duck Detector** to audit kernel stealth, TEE alignment, and leftover root artifacts:
+<details>
+<summary><strong>Auditing stealth with Duck Detector (expected clean vs setup signals)</strong></summary>
 
-- **Expected Clean:** `No suspicious kernel markers`, `Function hooks: Clean`, `Mappings: Clean`, `Loader visibility: Clean`, `Native Root` clean (with `prctl(0xDEADBEEF)` root-guarded and `/data/local/tmp/` free of `ksud`/temp binaries), and `TEE: Attestation aligned`.
-- **Expected Setup Signals:**
-  - `Dangerous Apps` / `Root Managers` → Clear by importing your `HMA-OSS_config.json` in [HMA-OSS](https://github.com/frknkrc44/HMA-OSS) and adding the audited app to your hide template.
-  - `ADB Runtime` → Clears when USB Debugging is turned off after setup.
-  - See [Troubleshooting — Blindspot 4](TROUBLESHOOTING.md#-blindspot-4-google-play-integrity-knox-tripping--hardware-attestation) for details on LineageOS `userdebug` props and Vector `xposed_data` SELinux context behavior.
+- **Expected Clean on this kernel (`v1.2.0+`):**
+  - `No suspicious kernel markers`
+  - `Function hooks: Clean`, `Mappings: Clean`, `Loader visibility: Clean`
+  - `Native Root` clean (`prctl(0xDEADBEEF)` is guarded to `GLOBAL_ROOT_UID`; keep `/data/local/tmp/` free of leftover `ksud`/temp binaries)
+  - `TEE: Attestation aligned` (built-in `hal_keymaster_default` DAK SELinux rules active on boot)
+- **Expected Setup Signals (user-configurable):**
+  - `Dangerous Apps` / `Root Managers` → Clears when you import your `HMA-OSS` hide config and add the detector app to your template.
+  - `ADB Runtime` → Clears when **USB Debugging** is disabled after setup.
+  - See [Troubleshooting — Blindspot 4](TROUBLESHOOTING.md#blindspot-4-google-play-integrity-knox-tripping--hardware-attestation) for additional details on LineageOS `userdebug` properties and Vector `xposed_data` SELinux context behavior.
+
+</details>
 
 ---
 
-## 🔗 Related Docs
+## Related Docs
 
 | Document | Description |
 | :--- | :--- |
-| [⚡ Flashing Guide](FLASHING_GUIDE.md) | Detailed flashing methods (AnyKernel3, samloader, Odin, Heimdall) |
-| [🛠️ Kernel Build Guide](BUILD.md) | How to compile the kernel from source or CI |
-| [🔄 OTA Updates Survival](OTA_AND_UPDATES.md) | How to retain root across LineageOS updates |
-| [🛠️ Troubleshooting & Diagnostics](TROUBLESHOOTING.md) | Common errors, logs extraction, and fixes |
-| [🏗️ Technical Architecture](ARCHITECTURE.md) | Hardware security, TrustZone, and SUSFS design |
-| [🤝 Contributing Guidelines](CONTRIBUTING.md) | How to contribute patches and improvements |
-| [📚 Documentation Hub](README.md) | Project overview, navigation hub, and full index |
+| [Flashing Guide](FLASHING_GUIDE.md) | Step-by-step commands for AnyKernel3, `samloader`, Odin, Heimdall, and `dd` |
+| [OTA Updates Survival](OTA_AND_UPDATES.md) | Re-apply KernelSU-Next after LineageOS nightlies in 5 seconds |
+| [Kernel Build Guide](BUILD.md) | Build the kernel and `susfs4ksu-v1.5.5.zip` locally or via GitHub Actions |
+| [Troubleshooting & Diagnostics](TROUBLESHOOTING.md) | Crash logs, Safe Mode bootloop recovery, and Play Integrity fixes |
+| [Technical Architecture](ARCHITECTURE.md) | Exynos 850 TZASC, Manual Hooks, Dynamic UAPI, and SUSFS design |
+| [Documentation Hub](README.md) | Full docs map and upstream references |

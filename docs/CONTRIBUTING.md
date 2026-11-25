@@ -1,412 +1,151 @@
-# 🤝 Contributing to A21s-KernelSU-Next
+[← Documentation Hub](README.md) · [Main README](../README.md)
 
-**This guide explains how to report bugs, write patches, test builds, and contribute code or ports to the A21s-KernelSU-Next project — a custom Linux kernel with KernelSU-Next root for the Samsung Galaxy A21s (SM-A217F) running LineageOS 24.**
+# Contributing to A21s-KernelSU-Next
 
----
-
-## 🗺️ Jump to What You Need
-
-| I want to… | Go to |
-|---|---|
-| Report a bug | [🐛 Bug Reporting](#-bug-reporting) |
-| Submit a patch or new feature | [🔀 Submitting a Pull Request](#-submitting-a-pull-request) |
-| Run the full dev workflow | [🛠️ Development Workflow](#️-development-workflow) |
-| Check what to test before submitting | [✅ Testing Checklist](#-testing-checklist) |
-| Port to another Samsung Exynos device | [📲 Porting to Other Devices](#-porting-to-other-devices) |
-| Understand the code style rules | [💅 Code Style](#-code-style) |
-| See what contributions are welcome | [💡 How You Can Contribute](#-how-you-can-contribute) |
+> How to report bugs with full logs, edit or export clean kernel patches, test on Galaxy A21s variants (`SM-A217F` / `M` / `N`), and port manual hooks to other Exynos non-GKI devices.
 
 ---
 
-## 🏁 Before You Begin (Prerequisites)
+## Jump to What You Need
 
-Before contributing, make sure you have the following set up:
+| I want to… | Go to… |
+| :--- | :--- |
+| See all ways to contribute (testing, patches, docs, ports) | [How You Can Contribute](#how-you-can-contribute) |
+| Report a bug or bootloop cleanly | [Bug Reporting](#bug-reporting) |
+| Run the local patch & build dev workflow | [Development Workflow](#development-workflow) |
+| Verify hardware & KSU behavior before opening a PR | [Testing Checklist](#testing-checklist) |
+| Check commit message, patch & shell formatting rules | [Code Style](#code-style) |
+| Submit a Pull Request | [Submitting a Pull Request](#submitting-a-pull-request) |
+| Port manual hooks to another Exynos 4.19 device | [Porting to Other Devices](#porting-to-other-devices) |
 
-- **Hardware:** A physical Samsung Galaxy A21s (SM-A217F, SM-A217M, or SM-A217N) for on-device testing.
-- **OS:** LineageOS 24 installed and booted on the device.
-- **Host OS:** Linux (Ubuntu 22.04 LTS or later recommended).
-- **Toolchain:** ARM64 cross-compiler (e.g. `aarch64-linux-gnu-gcc` or Clang/LLVM as used by the build scripts).
-- **Dependencies:** All packages installed via the setup script (see [🛠️ Development Workflow](#️-development-workflow)).
-- **Git:** Familiarity with basic Git — fork, branch, commit, patch, pull request.
-- **Account:** A GitHub account for submitting issues and pull requests.
+---
+
+## Before You Begin (Prerequisites)
+
+- **Hardware:** Physical Samsung Galaxy A21s (`SM-A217F`, `SM-A217M`, or `SM-A217N`) running [LineageOS 24](https://github.com/LineageOS/android_device_samsung_a21s).
+- **Host Tools:** Linux host (or [Docker](../docker-compose.yml) / [GitHub Actions CI](../.github/workflows/build-kernel.yml)) + `git`, `python3`, `shellcheck`.
+- **Workspace:** Configured automatically via [`./scripts/setup_env.sh`](../scripts/setup_env.sh).
 
 > [!NOTE]
-> You do **not** need to be a kernel developer to contribute. Testing on hardware, writing clear bug reports, and trying builds on variant devices are just as valuable as writing code.
+> You do **not** need to write C kernel code to contribute — variant hardware test reports, reproducible bug logs, and documentation fixes are just as valuable.
 
 ---
 
-## 💡 How You Can Contribute
+## How You Can Contribute
 
-There are several ways to get involved, regardless of your skill level:
-
-### 🧪 Testing on Device Variants
-
-The Galaxy A21s ships in multiple regional variants. If you have access to one, testing builds and reporting results is enormously helpful:
-
-| Variant | Region |
-|---|---|
-| SM-A217F | Global / Europe |
-| SM-A217M | Latin America |
-| SM-A217N | South Korea |
-
-Even a simple "boot confirmed, `su` works, no regressions noticed" report on a variant is a meaningful contribution.
-
-### 🔀 Submitting Patches
-
-- Keep commits **modular and descriptive** — one logical change per commit.
-- **Separate** build-system fixes from core kernel patches.
-- Do **NOT** commit binary build artifacts (`*.img`, `*.tar`, `*.zip`) to the Git repository.
-- Reference related issues in your commit message (e.g. `Fixes #42`).
-
-### 📲 Porting to Other Devices
-
-The manual hooks pattern developed here applies to all Exynos non-GKI devices. See [📲 Porting to Other Devices](#-porting-to-other-devices) for guidance.
-
-### 📝 Documentation
-
-Spotted a typo? An outdated step? A missing explanation? Open a PR against any file in `docs/`. Documentation improvements are always welcome.
+- **Testing on Variants:** Report boot, `su`, SUSFS, and hardware status on **SM-A217F** (Global), **SM-A217M** (Latin America), or **SM-A217N** (South Korea).
+- **Kernel & Build Fixes:** Keep commits modular, keep binary outputs (`*.img`, `*.tar`, `*.zip`) out of Git, and validate sequential patch order ([`patches/`](../patches/) `0001`–`0004`).
+- **Documentation & Tooling:** Open PRs against [`docs/`](../docs/), [`build.py`](../build.py), or [`scripts/`](../scripts/).
 
 ---
 
-## 🐛 Bug Reporting
+## Bug Reporting
 
-Good bug reports save enormous time. Please follow this etiquette before opening an issue.
-
-### Before You File
-
-1. **Search existing issues** — your bug may already be tracked or resolved.
-2. **Reproduce it** — confirm the bug happens consistently, not just once.
-3. **Narrow it down** — does it happen with stock KernelSU-Next but not this kernel? After a specific patch? Note that.
-4. **Check the latest build** — make sure you are on the most recent release before reporting.
-
-### What to Include in Your Report
-
-A complete bug report should contain the following:
-
-```
-**Device variant:** SM-A217F / SM-A217M / SM-A217N
-**LineageOS 24 build date:**
-**Kernel build / commit hash:**
-**KernelSU-Next version:**
-
-**Describe the bug:**
-A clear and concise description of what happened.
-
-**Steps to reproduce:**
-1. ...
-2. ...
-3. ...
-
-**Expected behaviour:**
-What you expected to happen.
-
-**Actual behaviour:**
-What actually happened.
-
-**Logs / dmesg / kernel panic output:**
-(paste here or attach as a file)
-
-**Additional context:**
-(magisk modules, Xposed/LSPosed, modified system apps, etc.)
-```
-
-> [!IMPORTANT]
-> Always include the **kernel commit hash** (`git -C a21s-kernel log --oneline -1`) and the **KernelSU-Next version** (`ksud --version` on-device). Without these, it is very difficult to reproduce issues.
-
-### Collecting Logs
-
-```bash
-# Capture dmesg immediately after a bug occurs (run on-device via ADB):
-adb shell dmesg > dmesg_$(date +%Y%m%d_%H%M%S).txt
-
-# Capture a kernel panic log from the last boot:
-adb shell cat /proc/last_kmsg > last_kmsg.txt
-
-# Check KernelSU-Next daemon status:
-adb shell ksud log
-```
+1. Search existing [Open](https://github.com/rebeeh/A21s-KernelSU-Next/issues) and [Closed Issues](https://github.com/rebeeh/A21s-KernelSU-Next/issues?q=is%3Aissue+is%3Aclosed) first.
+2. Verify whether the bug still reproduces on the [latest release](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest).
+3. Collect logs with the 1-click reporter:
+   ```bash
+   python3 build.py report-issue
+   ```
+   *(Works in both booted Android and Recovery/TWRP! For manual commands, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md#method-c-manual-log-extraction-via-adb).)*
+4. Open a [New Bug Report](https://github.com/rebeeh/A21s-KernelSU-Next/issues/new?template=bug_report.md) using [`.github/ISSUE_TEMPLATE/bug_report.md`](../.github/ISSUE_TEMPLATE/bug_report.md).
 
 > [!WARNING]
-> Scrub your logs for sensitive information (Wi-Fi passwords, accounts, tokens) before attaching them to a public issue.
+> Always scrub Wi-Fi credentials, accounts, or private keys (`keybox.xml` material) before attaching public logs.
 
 ---
 
-## 🛠️ Development Workflow
+## Development Workflow
 
-Follow these steps to go from fork to pull request:
-
-1. **Fork the repository** on GitHub and clone your fork locally:
-
+1. **Fork & clone** the repository:
    ```bash
    git clone https://github.com/<your-username>/A21s-KernelSU-Next.git
    cd A21s-KernelSU-Next
    ```
-
-2. **Set up the development environment:**
-
+2. **Initialize the external build workspace** (`build/a21s-kernel`, `KernelSU-Next`, `clang-r416183b`, `magiskboot`, and sequential `0001`–`0004` patch verification):
    ```bash
    ./scripts/setup_env.sh
    ```
-
-   This installs required packages and configures the cross-compilation toolchain.
-
-3. **Create a feature branch** — never work directly on `main`:
-
+3. **Create a feature branch:**
    ```bash
-   git checkout -b feat/my-feature-name
+   git checkout -b feat/my-change
    ```
-
-4. **Make your kernel modifications** inside `a21s-kernel/`.
-
-5. **Build locally** to verify no compilation errors:
-
+4. **Edit kernel files** in `build/a21s-kernel/` (or `build/a21s-kernel/KernelSU-Next/`) and **build/test on hardware** *(passing baseline `boot.img` as documented in [BUILD.md](BUILD.md))*:
    ```bash
-   ./scripts/build.sh
+   ./scripts/build.sh boot.img
+   ./scripts/package_anykernel3.sh
    ```
-
-6. **Flash and test on physical hardware.** See [✅ Testing Checklist](#-testing-checklist) for what to verify before you submit.
-
-7. **Export your patch:**
-
-   ```bash
-   git -C a21s-kernel diff > patches/my-feature.patch
-   ```
-
-8. **Commit your changes** with a clear, descriptive message:
-
-   ```bash
-   git add patches/my-feature.patch
-   git commit -m "kernel: short description of what this patch does
-
-   Longer explanation of why this change is needed, what problem it
-   solves, and any caveats or known side-effects.
-
-   Fixes #<issue-number>"
-   ```
-
-9. **Push and open a Pull Request** against the `main` branch. See [🔀 Submitting a Pull Request](#-submitting-a-pull-request) for the PR template.
+5. **Export clean patches** back into [`patches/`](../patches/) (do **not** duplicate hunks across patches — verify on a fresh clone with `git apply --check`), commit, and open a PR against `main`.
 
 ---
 
-## ✅ Testing Checklist
+## Testing Checklist
 
-Run through every item below before marking your PR as "ready for review." Check each item by flashing your build to a physical Galaxy A21s.
+Confirm relevant items on physical hardware before marking a PR ready:
 
-### Boot & Stability
+<details>
+<summary><strong>Expand full PR verification checklist (Boot, KernelSU-Next, SUSFS, Hardware, Power)</strong></summary>
 
-- [ ] Device boots to LineageOS 24 without bootloop.
-- [ ] Device boots within normal time (not significantly slower than stock kernel).
-- [ ] No kernel panic on fresh boot (check `dmesg` after first boot).
-- [ ] ADB accessible over USB after boot.
+- **Boot & Stability:** Clean boot to LineageOS 24, normal boot time, no panics in `dmesg`, ADB responsive.
+- **KernelSU-Next & SUSFS:** Manager shows `Working [BUILT-IN (GKI1)]` / `Manual` / `UAPI 5` / `SuSFS v1.5.5 (NON-GKI)`, `ksud` boot scripts (`post-fs-data` / `services`) run automatically, `adb shell su` works when granted.
+- **Core Hardware:** Wi-Fi, LTE mobile data, Bluetooth, Camera (front/rear), Audio & Mic, USB (ADB/MTP/charging), GPS, Fingerprint sensor.
+- **Power & Regression:** Deep sleep functional, no new battery drain or thermal spike, unrelated subsystems unaffected.
 
-### KernelSU-Next Functionality
-
-- [ ] KernelSU-Next app shows root access granted.
-- [ ] `adb shell su` grants a root shell.
-- [ ] `ksud --version` reports the expected KernelSU-Next version.
-- [ ] Root apps (e.g. a file manager with root access) function correctly.
-- [ ] Module installation and uninstallation works via the KernelSU-Next app.
-
-### Core Hardware
-
-- [ ] Wi-Fi connects and maintains a stable connection.
-- [ ] Mobile data (LTE) connects and works.
-- [ ] Bluetooth pairs and transfers data.
-- [ ] Camera (rear and front) opens and captures photos/video.
-- [ ] Audio playback (speaker, earpiece, headphone jack if applicable).
-- [ ] Microphone captures audio during a call.
-- [ ] Calls can be placed and received.
-- [ ] USB connectivity (MTP, ADB, charging).
-- [ ] GPS acquires a fix.
-- [ ] Fingerprint sensor unlocks the device.
-
-### Power & Thermal
-
-- [ ] Device enters deep sleep (verify with `adb shell dumpsys batterystats`).
-- [ ] No significant battery drain regression compared to the previous build.
-- [ ] Device does not overheat under moderate workload (browsing, 10-minute video).
-
-### Regression Check
-
-- [ ] All existing functionality that your patch does **not** touch still works.
-- [ ] Run the build on at least one additional variant (SM-A217M or SM-A217N) if possible.
-
-> [!TIP]
-> You do not need to pass every hardware item if your patch does not touch those drivers. Clearly note in your PR which items you tested and which you could not verify.
+</details>
 
 ---
 
-## 💅 Code Style
+## Code Style
 
-Follow these conventions to keep the patch history clean and reviewable.
+- **Commits:** Imperative subject `<= 72` chars (`subsystem: concise summary`, e.g. `kernelsu: guard prctl handler to GLOBAL_ROOT_UID`), one logical change per commit.
+- **C Code:** Linux kernel style (`./build/a21s-kernel/scripts/checkpatch.pl` advisories checked).
+- **Shell Scripts:** Validate changes in [`scripts/`](../scripts/) and [`tools/`](../tools/) with `shellcheck`.
+- **Never commit build binaries:** Keep `*.img`, `*.tar`, and `.zip` build artifacts out of Git ([`.gitignore`](../.gitignore)).
 
-### Commit Messages
+---
 
-Use the standard kernel commit message format:
+## Submitting a Pull Request
 
-```
-subsystem: short imperative description (max 72 chars)
+- Prefix PR titles clearly: `[feat]`, `[fix]`, `[build]`, `[docs]`, `[refactor]`, or `[port]`.
+- Summarize what changed, why, which `SM-A217*` variant + kernel build you tested on, and link related issues (`Fixes #<number>`).
 
-Body explaining what the patch does and why. Wrap at 72 characters.
-Reference any relevant upstream commits, CVEs, or issue numbers.
+---
 
-Fixes #<issue>
-Closes #<issue>
-```
+## Porting to Other Devices
 
-Examples of **good** subject lines:
-```
-kernelsu: add manual hook for sys_execve on Exynos 850
-build: fix clang LTO flag for Android 14 compat
-drivers/battery: reduce charge current logging verbosity
-```
+The compile-time Manual Hook + Dynamic UAPI + DAK SELinux pattern translates cleanly to other non-GKI Samsung Exynos 4.x kernels:
 
-### Patch Organisation
-
-- One logical change per commit — do **not** bundle unrelated fixes.
-- If fixing a bug introduced by one of your own earlier commits in the same PR, squash it before submission.
-- Patches touching `a21s-kernel/` go into `patches/`.
-- Build-system changes (scripts, Makefiles, CI configs) are committed separately from kernel code changes.
-
-### Code Formatting
-
-- Follow the **Linux kernel coding style** (`Documentation/process/coding-style.rst`) for all C code.
-- Use tabs (not spaces) for indentation in C files.
-- Run `scripts/checkpatch.pl` against your patch before submitting:
-
-  ```bash
-  ./a21s-kernel/scripts/checkpatch.pl patches/my-feature.patch
-  ```
-
-- Shell scripts must pass `shellcheck`:
-
-  ```bash
-  shellcheck scripts/my-script.sh
-  ```
+| SoC | Example Devices | Notes |
+| :--- | :--- | :--- |
+| **Exynos 850** | Galaxy A21s (this repo), Galaxy A12 (`SM-A127F`), Galaxy M12 | Shares `universal850` / TZASC behavior |
+| **Exynos 9611** | Galaxy A51, Galaxy M31 | Non-GKI 4.14/4.19 |
+| **Exynos 9820** | Galaxy S10, Galaxy Note 10 | Non-GKI 4.14 |
+| **Exynos 7884B** | Galaxy A10, Galaxy A20 | Non-GKI 4.4 |
 
 > [!NOTE]
-> `checkpatch.pl` warnings about line length in strings or comments are advisory — fix them if you can, but they will not block a PR merge on their own.
+> GKI 2.0 devices (`5.10+`) do not need manual hooks — consult upstream [`KernelSU-Next`](https://github.com/KernelSU-Next/KernelSU-Next) directly.
+
+**Quick Porting Steps:**
+1. Obtain your target device's kernel tree and inspect our ordered patches:
+   - [`patches/0001-build-host-openssl-3-compat.patch`](../patches/0001-build-host-openssl-3-compat.patch)
+   - [`patches/0002-kernelsu-manual-hooks-and-backports.patch`](../patches/0002-kernelsu-manual-hooks-and-backports.patch)
+   - [`patches/0003-kernelsu-next-samsung-fixes.patch`](../patches/0003-kernelsu-next-samsung-fixes.patch)
+   - [`patches/0004-susfs-v1.5.5-kernel-4.19.patch`](../patches/0004-susfs-v1.5.5-kernel-4.19.patch)
+2. Test-apply with `git apply --check`, adapt `fs/` (`exec.c`, `open.c`, `read_write.c`, `stat.c`), `kernel/reboot.c`, and `fs/namespace.c` (`vfs_create_mount` vs `vfs_kern_mount`) to match your tree.
+3. Update [`tools/anykernel3/anykernel.sh`](../tools/anykernel3/anykernel.sh) (`block=`, `is_slot_device=`, `device.name*`) and defconfig (`CONFIG_KSU=y`, `CONFIG_KSU_MANUAL_HOOK=y`).
+4. Share your fork or porting findings by opening a [Feature / Enhancement Issue](https://github.com/rebeeh/A21s-KernelSU-Next/issues/new?template=feature_request.md).
 
 ---
 
-## 🔀 Submitting a Pull Request
-
-### PR Title Format
-
-```
-[type] Short description of the change
-```
-
-Where `[type]` is one of:
-
-| Type | Use for |
-|---|---|
-| `[feat]` | New feature or capability |
-| `[fix]` | Bug fix |
-| `[build]` | Build system or CI change |
-| `[docs]` | Documentation only |
-| `[refactor]` | Code cleanup with no behaviour change |
-| `[port]` | Adaptation for a new device or variant |
-
-### PR Description Template
-
-Copy and fill in this template when opening your pull request:
-
-```markdown
-## Summary
-<!-- One paragraph describing what this PR does and why. -->
-
-## Changes
-<!-- Bullet list of the files / subsystems changed. -->
-- 
-
-## Testing
-<!-- Describe how you tested this. Device variant, build hash, specific scenarios verified. -->
-- Device: SM-A217___
-- Kernel build: (commit hash)
-- KernelSU-Next version:
-- Testing checklist: (link to or paste completed checklist)
-
-## Screenshots / Logs
-<!-- Attach dmesg, screenshots, or other evidence if relevant. -->
-
-## Related Issues
-<!-- e.g. Closes #42 -->
-```
-
-### Review Process
-
-1. A maintainer will review your PR within a reasonable time.
-2. Address requested changes with new commits — do **not** force-push during active review unless asked.
-3. Once approved, a maintainer will squash-merge or rebase-merge depending on the change type.
-4. Your name will appear in the commit history — make sure your Git author details are correct.
-
-> [!IMPORTANT]
-> PRs that include binary files (`*.img`, `*.zip`, `*.tar`) will be closed immediately. Keep the repository source-only.
-
----
-
-## 📲 Porting to Other Devices
-
-The **manual hooks pattern** developed for the Galaxy A21s (SM-A217F / Exynos 850) is applicable to all Samsung Exynos non-GKI devices — that is, any Exynos SoC running a 4.x kernel that does not support the Generic Kernel Image interface.
-
-### Known Compatible Exynos Families
-
-| SoC | Example Devices |
-|---|---|
-| Exynos 850 | Galaxy A21s (this project), Galaxy A12 (SM-A127F), Galaxy M12 |
-| Exynos 9611 | Galaxy A51, Galaxy M31 |
-| Exynos 9820 | Galaxy S10, Galaxy Note 10 |
-| Exynos 7884B | Galaxy A10, Galaxy A20 |
-
-> [!NOTE]
-> GKI devices (Exynos 1080, 1280, 2200 and newer) do **not** need manual hooks — KernelSU-Next supports them natively. The porting guidance here applies only to non-GKI targets.
-
-### Steps to Port
-
-1. **Identify your kernel source** — find or extract the Samsung open-source kernel for your target device.
-2. **Study our patch set** in `patches/` — the manual hook patches are the ones labelled `kernelsu-*.patch`.
-3. **Apply the patches** to your kernel tree:
-
-   ```bash
-   git am patches/kernelsu-manual-hooks.patch
-   ```
-
-   Expect conflicts; resolve them against your SoC's specific system-call entry points.
-
-4. **Adapt the hook sites** — the exact function names and call sites differ per SoC. Use `grep` to locate `sys_execve`, `sys_faccessat`, and `sys_openat` equivalents in your kernel.
-5. **Adjust the Makefile / Kconfig** entries as needed for your device's defconfig.
-6. **Test KernelSU-Next detection** — boot and confirm `ksud` sees the hooks via `adb shell ksud status`.
-7. **Share your work** — open a Discussion or link your fork in the project's GitHub Discussions. If your port is stable, consider a cross-reference PR to `docs/PORTING.md`.
-
-> [!TIP]
-> Join the community discussion or open a GitHub Discussion thread before you start a port — others may already be working on the same device and can save you significant effort.
-
----
-
-## 🌱 Community Guidelines
-
-- **Be respectful.** Everyone here — from first-time testers to kernel veterans — deserves courtesy.
-- **Be patient.** Maintainers contribute in their free time. Allow reasonable time for review.
-- **Be specific.** Vague reports ("it doesn't work") are very hard to act on. The more detail, the better.
-- **Search first.** Check open and closed issues before filing a new one.
-- **No spam.** Do not bump issues repeatedly or ping maintainers unnecessarily.
-
----
-
-## 📚 Related Docs
+## Related Docs
 
 | Document | Description |
-|---|---|
-| [📖 User Installation Guide](USER_GUIDE.md) | First-time installation and root setup |
-| [⚡ Flashing Methods Guide](FLASHING_GUIDE.md) | Step-by-step flashing for AnyKernel3, Odin, samloader, and Heimdall |
-| [🛠️ Kernel Build Guide](BUILD.md) | Detailed build environment setup and compilation guide |
-| [🔄 OTA Updates Survival](OTA_AND_UPDATES.md) | Preserving root across LineageOS updates |
-| [🏗️ Technical Architecture](ARCHITECTURE.md) | TrustZone, manual hooks, and SUSFS design |
-| [🔬 Research & Implementation Report](RESEARCH.md) | Engineering analysis, kprobe disassembly, and UAPI |
-| [🛠️ Troubleshooting & Diagnostics](TROUBLESHOOTING.md) | Log extraction, bootloop recovery, and issue templates |
-| [📚 Documentation Hub](README.md) | Master index and navigation hub |
-
----
-
-*Thank you for contributing to A21s-KernelSU-Next — every test report, patch, and improvement makes this project better for the entire Galaxy A21s community.* 🙌
+| :--- | :--- |
+| [User Installation Guide](USER_GUIDE.md) | First-time installation, stealth modules, and Duck Detector |
+| [Flashing Guide](FLASHING_GUIDE.md) | AnyKernel3, `samloader`, Odin, and Heimdall |
+| [Kernel Build Guide](BUILD.md) | Compilation pipelines & `susfs4ksu-v1.5.5.zip` packaging |
+| [OTA Updates Survival](OTA_AND_UPDATES.md) | Retaining root across LineageOS updates |
+| [Technical Architecture](ARCHITECTURE.md) | Exynos 850 TZASC, Manual Hooks, Dynamic UAPI, and SUSFS |
+| [Technical Research Report](RESEARCH.md) | Crash dumps, device tree alignment, and workspace design |
+| [Troubleshooting & Diagnostics](TROUBLESHOOTING.md) | Crash reporter, `ramoops`, Blindspots 1–5 |
+| [Documentation Hub](README.md) | Master index and navigation hub |

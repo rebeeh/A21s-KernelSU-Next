@@ -1,116 +1,100 @@
-# 🗺️ Documentation Hub — Galaxy A21s KernelSU-Next
+[← Repository Home](../README.md)
 
-**Everything you need to build, flash, root, update, debug, and contribute to the Galaxy A21s (`SM-A217F`) KernelSU-Next project on LineageOS 24 — in one place.**
+# Documentation Hub — Galaxy A21s KernelSU-Next
+
+> Everything you need to flash, root, configure stealth, update, build, debug, and contribute to **A21s-KernelSU-Next** (`SM-A217F` / LineageOS 24) in one place.
 
 ---
 
-## ⚡ Jump to What You Need
+## Jump to What You Need
 
 | I want to… | Go here |
 | :--- | :--- |
-| Get root on my A21s for the first time | [User Installation Guide](USER_GUIDE.md) |
-| Flash the kernel ZIP via recovery | [AnyKernel3 method](FLASHING_GUIDE.md#method-2-anykernel3-via-recovery-no-pc-required) |
-| Flash via Linux terminal (`samloader`) | [samloader method](FLASHING_GUIDE.md#method-1-samloader-linux--recommended) |
-| Compile the kernel from source / CI | [Kernel Compilation Guide](BUILD.md) |
-| Survive a LineageOS OTA update | [OTA & Updates Survival](OTA_AND_UPDATES.md) |
-| Debug a bootloop or pull kernel logs | [Troubleshooting & Diagnostics](TROUBLESHOOTING.md) |
-| Understand how the kernel/KSU integration works | [Technical Architecture](ARCHITECTURE.md) |
-| Read the full research & implementation analysis | [Research & Implementation Report](RESEARCH.md) |
-| Submit a patch or contribute code | [Contributing Guidelines](CONTRIBUTING.md) |
+| Get root on my A21s for the first time (no PC compiling) | [User Installation Guide](USER_GUIDE.md) |
+| Flash the kernel ZIP via Recovery (`AnyKernel3`) | [AnyKernel3 Method](FLASHING_GUIDE.md#method-2-anykernel3-via-recovery-no-pc-required) |
+| Flash via Linux terminal (`samloader`) | [samloader Method](FLASHING_GUIDE.md#method-1-samloader-linux--recommended) |
+| Compile the kernel or `susfs4ksu-v1.5.5.zip` from source | [Kernel Build Guide](BUILD.md) |
+| Keep root across a LineageOS OTA update | [OTA & Updates Survival](OTA_AND_UPDATES.md) |
+| Debug a bootloop, pull `pstore` logs, or check Play Integrity | [Troubleshooting & Diagnostics](TROUBLESHOOTING.md) |
+| Understand TZASC manual hooks, UAPI 5, and SUSFS v1.5.5 | [Technical Architecture](ARCHITECTURE.md) |
+| Read the full crash analysis & device-tree research log | [Technical Research Report](RESEARCH.md) |
+| Submit a patch, bug report, or port to another Exynos device | [Contributing Guidelines](CONTRIBUTING.md) |
 
 ---
 
-## 📚 Documentation Index
+## Documentation Index
 
 | Document | Target Audience | Summary |
 | :--- | :--- | :--- |
-| **[User Installation Guide](USER_GUIDE.md)** | End Users | Step-by-step beginner guide to getting root on LineageOS 24 via recovery ZIP or PC. |
-| **[Flashing Guide](FLASHING_GUIDE.md)** | All Users | Detailed flashing instructions using `AnyKernel3`, `samloader`, `Heimdall`, and `Odin`. |
-| **[Kernel Compilation Guide](BUILD.md)** | Developers / Power Users | How to build the kernel locally with Clang, Docker, Python CLI, or GitHub Actions. |
-| **[OTA & Updates Survival](OTA_AND_UPDATES.md)** | All Users | How to survive LineageOS nightly/weekly updates without losing data or root. |
-| **[Technical Architecture](ARCHITECTURE.md)** | Developers / Engineers | Deep-dive on Samsung Exynos 850 TrustZone (TZASC IRQ 160), SUSFS v1.5.5, and manual hooks. |
-| **[Research & Implementation Report](RESEARCH.md)** | Developers / Researchers | Comprehensive analysis of Exynos 850 kernel trees, dynamic kprobes vs manual hooks, and UAPI 5 parity. |
-| **[Troubleshooting & Bug Reporting](TROUBLESHOOTING.md)** | All Users | Extracting `ramoops`, `dmesg`, `logcat`, and `ksud` logs, bootloop recovery, and issue templates. |
-| **[Contributing Guidelines](CONTRIBUTING.md)** | Contributors | How to contribute code, submit patches, and verify kernel builds. |
+| **[User Installation Guide](USER_GUIDE.md)** | End users | Prebuilt downloads, ROM compatibility, manager allowlist, ReZygisk/Vector/HMA-OSS/AlwaysStrong stack. |
+| **[Flashing Guide](FLASHING_GUIDE.md)** | All users | Detailed flashing walkthroughs for `AnyKernel3`, `samloader`, `Odin`, `Heimdall`, and raw `dd`. |
+| **[Kernel Build Guide](BUILD.md)** | Developers / Power users | Cloud CI, Docker, [`build.py`](../build.py), native Clang compilation, and `susfs4ksu-v1.5.5.zip` packaging. |
+| **[OTA & Updates Survival](OTA_AND_UPDATES.md)** | Daily drivers | Restoring root after LineageOS OTAs in seconds without losing data or modules. |
+| **[Technical Architecture](ARCHITECTURE.md)** | Kernel engineers | Deep dive into Exynos 850 TrustZone (`irq/160-tzasc`), manual hooks, Dynamic UAPI, and SUSFS `fs_context`. |
+| **[Technical Research Report](RESEARCH.md)** | Researchers / Porters | Hardware trap root cause, partition geometry (`36 MiB`), overlay workspace design, and engineering outcomes. |
+| **[Troubleshooting & Diagnostics](TROUBLESHOOTING.md)** | All users | Automated [`build.py report-issue`](../build.py) reporter, `ramoops`/`dmesg`/`ksud` logs, Safe Mode, and Play Integrity. |
+| **[Contributing Guidelines](CONTRIBUTING.md)** | Contributors | Commit format, patch workflow, hardware testing checklist, and Exynos porting steps. |
 
 ---
 
-## 🧭 Reading Flow — Where to Start
-
-Use this visual map to follow the right path based on your goal:
+## Reading Flow — Where to Start
 
 ```mermaid
 flowchart TD
-    Start["New to the Project?"] --> UG["📖 USER_GUIDE.md<br/>(First-time root setup)"]
-    UG --> FG["⚡ FLASHING_GUIDE.md<br/>(AnyKernel3 / samloader / Odin)"]
-    FG --> Success{"Root Active & Working?"}
-    Success -- "Yes" --> OTA["🔄 OTA_AND_UPDATES.md<br/>(Survive LineageOS nightlies)"]
-    Success -- "No / Issues" --> TB["🛠️ TROUBLESHOOTING.md<br/>(Logs, bootloops, diagnostics)"]
+    Start["New to A21s-KernelSU-Next?"] --> UG["USER_GUIDE.md<br/>(Downloads, Flashing & Stealth Stack)"]
+    UG --> FG["FLASHING_GUIDE.md<br/>(AnyKernel3 / samloader / Odin / Heimdall)"]
+    FG --> Success{"Booted & Root Active?"}
+    Success -- "Yes" --> OTA["OTA_AND_UPDATES.md<br/>(Survive LineageOS OTAs)"]
+    Success -- "No / Issues" --> TB["TROUBLESHOOTING.md<br/>(ramoops, Logs & Play Integrity)"]
     OTA --> Deep{"Want to Go Deeper?"}
-    Deep -- "Build from source" --> BG["🛠️ BUILD.md<br/>(Clang, Docker, GitHub Actions)"]
-    Deep -- "Architecture & Security" --> ARCH["🏗️ ARCHITECTURE.md<br/>& RESEARCH.md<br/>(TZASC, SUSFS, Hooking)"]
-    BG & ARCH --> CONT["🤝 CONTRIBUTING.md<br/>(Patches, variants & PRs)"]
+    Deep -- "Build from source" --> BG["BUILD.md<br/>(CI, Docker, Clang & SUSFS Module)"]
+    Deep -- "Internals & Porting" --> ARCH["ARCHITECTURE.md & RESEARCH.md<br/>(TZASC, Manual Hooks, UAPI, SUSFS)"]
+    BG & ARCH --> CONT["CONTRIBUTING.md<br/>(Patches, Testing & PRs)"]
 ```
 
 > [!TIP]
-> **Junior users** — follow the flow top-to-bottom starting with the User Installation Guide.
-> **Kernel developers** — jump straight to `ARCHITECTURE.md` or `RESEARCH.md` and use the other docs as reference.
+> **End users:** Follow the top-to-bottom path starting with [User Installation Guide](USER_GUIDE.md).
+> **Kernel developers:** Jump straight to [Technical Architecture](ARCHITECTURE.md) and [Kernel Build Guide](BUILD.md).
 
 ---
 
-## 🔍 Upstream & Reference Trees
+## Upstream & Companion Repositories
 
-This project builds upon and integrates with the following key open-source repositories:
-
-1. **Exynos 850 Kernel Tree for LineageOS 24:**
-   - Repository: [`samsungexynos850/android_kernel_samsung_exynos850`](https://github.com/samsungexynos850/android_kernel_samsung_exynos850)
-   - Branch: `lineage-24.0` (Linux 4.19.325, commit `b8c71b7aecec`)
-   - Role: Upstream base kernel tree utilized for compilation and our KernelSU-Next patchset.
-
-2. **Official LineageOS Device Tree for Galaxy A21s:**
-   - Repository: [`LineageOS/android_device_samsung_a21s`](https://github.com/LineageOS/android_device_samsung_a21s)
-   - Role: Hardware definitions, partition geometry (`boot` size: 36 MiB limit), header version (2), page size (2048), and init scripts.
-
-3. **Official LineageOS Prebuilt Toolchain:**
-   - Repository: [`LineageOS/android_prebuilts_clang_kernel_linux-x86_clang-r416183b`](https://github.com/LineageOS/android_prebuilts_clang_kernel_linux-x86_clang-r416183b)
-   - Branch: `lineage-20.0`
-   - Role: Clang 12.0.5 compiler with integrated LLVM assembler and LLD linker.
-
-4. **KernelSU-Next Upstream:**
-   - Repository: [`KernelSU-Next/KernelSU-Next`](https://github.com/KernelSU-Next/KernelSU-Next)
-   - Branch: `legacy` (v3.4.0-legacy)
-   - Role: Next-generation kernel-based root solution for Android with GKI1 / Non-GKI support.
+| Component | Repository & Branch / Release | Role |
+| :--- | :--- | :--- |
+| **Exynos 850 Kernel Tree** | [`samsungexynos850/android_kernel_samsung_exynos850`](https://github.com/samsungexynos850/android_kernel_samsung_exynos850/tree/lineage-24.0) (`lineage-24.0`) | Linux `4.19.325` (`b8c71b7aecec`) upstream base kernel |
+| **LineageOS Device Tree** | [`LineageOS/android_device_samsung_a21s`](https://github.com/LineageOS/android_device_samsung_a21s) | Partition layout (`boot` 36 MiB, header v2, page size 2048) |
+| **AOSP Clang Toolchain** | [`LineageOS/android_prebuilts_clang_kernel_linux-x86_clang-r416183b`](https://github.com/LineageOS/android_prebuilts_clang_kernel_linux-x86_clang-r416183b) | Clang 12.0.5 (`clang-r416183b`) + LLVM tools |
+| **KernelSU-Next** | [`KernelSU-Next/KernelSU-Next`](https://github.com/KernelSU-Next/KernelSU-Next/tree/legacy) (`legacy`) · [Manager v3.4.2](https://github.com/KernelSU-Next/KernelSU-Next/releases/tag/v3.4.2) | Non-GKI kernel root driver & manager UI (`UAPI 5`) |
+| **SUSFS** | [`simonpunk/susfs4ksu`](https://gitlab.com/simonpunk/susfs4ksu/-/tree/kernel-4.19) (`kernel-4.19`) | Kernel VFS stealth (`v1.5.5`) + userspace `ksu_susfs_arm64` |
+| **Stealth Module Stack** | [ReZygisk](https://github.com/PerformanC/ReZygisk) · [Vector](https://github.com/JingMatrix/Vector) · [HMA-OSS](https://github.com/frknkrc44/HMA-OSS) · [zygisk-detach](https://github.com/j-hc/zygisk-detach) · [AlwaysStrong](https://gitlab.com/Evokerr/AlwaysStrong/-/releases) | Zygisk, Xposed hooking, app concealment, and Play Integrity |
 
 ---
 
-## 🛠️ Before You Begin
+## Before You Begin
 
 > [!IMPORTANT]
-> Review these prerequisites before flashing or building anything.
+> Verify every prerequisite below before flashing or building:
 
-- **Device:** Samsung Galaxy A21s (`SM-A217F`, codename `a21s`, SoC `universal850` / Exynos 850)
-- **ROM:** LineageOS 24 (Android 14) — this project is built and tested against LineageOS 24 only
-- **Unlocked bootloader** — required to flash a custom kernel
-- **Custom recovery** (e.g. TWRP or LineageOS Recovery) — required for the AnyKernel3 ZIP method
-- **USB debugging enabled** — required for `adb` / `fastboot` / `samloader` workflows
-- **A full backup of your data** — flashing carries risk; always back up first
+- **Device:** Samsung Galaxy A21s (`SM-A217F` / `SM-A217M` / `SM-A217N`, codename `a21s`, SoC `universal850`).
+- **ROM:** **LineageOS 24 (Android 17 / SDK 37)** or compatible AOSP ROM *(Stock OneUI is **not** supported)*.
+- **Unlocked bootloader** and **stock `boot.img` backup** stored safely off-device.
+- **Custom recovery** (Lineage Recovery, [TWRP](https://twrp.me), or [OrangeFox](https://orangefox.download)) for `AnyKernel3` flashes, or **USB Debugging** for PC flashing.
 
 > [!CAUTION]
-> Flashing the wrong image can result in a soft-brick. Always verify the build matches your exact device model (`SM-A217F`) before proceeding.
+> Always confirm your ROM base and device model (`SM-A217F` / `M` / `N`) before flashing raw images to `/dev/block/by-name/boot`.
 
 ---
 
-## 📋 Related Docs (Next Steps)
-
-After reading this hub, the natural next stop is the **[User Installation Guide](USER_GUIDE.md)**. From there, follow the reading flow above based on what you need.
+## Suggested Reading Order
 
 | If you just finished… | Read next… |
 | :--- | :--- |
-| This README | [User Installation Guide](USER_GUIDE.md) |
+| This hub | [User Installation Guide](USER_GUIDE.md) |
 | User Installation Guide | [Flashing Guide](FLASHING_GUIDE.md) |
 | Flashing Guide | [OTA & Updates Survival](OTA_AND_UPDATES.md) |
-| OTA & Updates Survival | [Troubleshooting & Bug Reporting](TROUBLESHOOTING.md) |
+| OTA & Updates Survival | [Troubleshooting & Diagnostics](TROUBLESHOOTING.md) |
 | Troubleshooting | [Technical Architecture](ARCHITECTURE.md) |
-| Technical Architecture | [Research & Implementation Report](RESEARCH.md) |
-| Research Report | [Kernel Compilation Guide](BUILD.md) |
-| Kernel Compilation | [Contributing Guidelines](CONTRIBUTING.md) |
+| Technical Architecture | [Technical Research Report](RESEARCH.md) |
+| Technical Research Report | [Kernel Build Guide](BUILD.md) |
+| Kernel Build Guide | [Contributing Guidelines](CONTRIBUTING.md) |
