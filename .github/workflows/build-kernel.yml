@@ -48,7 +48,6 @@ jobs:
           git apply ../patches/0004-susfs-v1.5.5-kernel-4.19.patch
           cd KernelSU-Next
           git apply ../../patches/0003-kernelsu-next-samsung-fixes.patch
-          git apply ../../patches/0005-kernelsu-next-susfs-integration.patch
 
       - name: Configure Kernel
         run: |

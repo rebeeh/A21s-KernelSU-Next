@@ -77,9 +77,4 @@ if git apply --check "${PROJECT_ROOT}/patches/0003-kernelsu-next-samsung-fixes.p
     echo "[✓] Applied 0003-kernelsu-next-samsung-fixes.patch"
 fi
 
-if git apply --check "${PROJECT_ROOT}/patches/0005-kernelsu-next-susfs-integration.patch" 2>/dev/null; then
-    git apply "${PROJECT_ROOT}/patches/0005-kernelsu-next-susfs-integration.patch"
-    echo "[✓] Applied 0005-kernelsu-next-susfs-integration.patch"
-fi
-
 echo "[✓] Environment is fully configured and ready for compilation!"

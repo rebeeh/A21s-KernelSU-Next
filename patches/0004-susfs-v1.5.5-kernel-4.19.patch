@@ -1,5 +1,5 @@
 diff --git a/arch/arm64/configs/exynos850-a21snsxx_defconfig b/arch/arm64/configs/exynos850-a21snsxx_defconfig
-index a3e95f21ee43..778e880a8001 100644
+index a3e95f21e..778e880a8 100644
 --- a/arch/arm64/configs/exynos850-a21snsxx_defconfig
 +++ b/arch/arm64/configs/exynos850-a21snsxx_defconfig
 @@ -755,3 +755,19 @@ CONFIG_BUG_ON_DATA_CORRUPTION=y
@@ -23,7 +23,7 @@ index a3e95f21ee43..778e880a8001 100644
 +CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y
 +CONFIG_KSU_SUSFS_OPEN_REDIRECT=y
 diff --git a/fs/Makefile b/fs/Makefile
-index e5db415af03d..2a17e0a1dfaa 100644
+index e5db415af..2a17e0a1d 100644
 --- a/fs/Makefile
 +++ b/fs/Makefile
 @@ -15,6 +15,8 @@ obj-y :=	open.o read_write.o file_table.o super.o \
@@ -36,7 +36,7 @@ index e5db415af03d..2a17e0a1dfaa 100644
  obj-y +=	buffer.o block_dev.o direct-io.o mpage.o
  else
 diff --git a/fs/dcache.c b/fs/dcache.c
-index ade446681354..28488d2de30c 100644
+index ade446681..28488d2de 100644
 --- a/fs/dcache.c
 +++ b/fs/dcache.c
 @@ -31,6 +31,9 @@
@@ -74,56 +74,8 @@ index ade446681354..28488d2de30c 100644
  		spin_lock(&dentry->d_lock);
  		if (dentry->d_parent != parent)
  			goto next;
-diff --git a/fs/exec.c b/fs/exec.c
-index bf7eaf60f501..cc8770f465f1 100644
---- a/fs/exec.c
-+++ b/fs/exec.c
-@@ -1928,12 +1928,21 @@ int do_execve_file(struct file *file, void *__argv, void *__envp)
- 	return __do_execve_file(AT_FDCWD, NULL, argv, envp, 0, file);
- }
- 
-+#ifdef CONFIG_KSU
-+__attribute__((hot))
-+extern int ksu_handle_execveat(int *fd, struct filename **filename_ptr,
-+				void *argv, void *envp, int *flags);
-+#endif
-+
- int do_execve(struct filename *filename,
- 	const char __user *const __user *__argv,
- 	const char __user *const __user *__envp)
- {
- 	struct user_arg_ptr argv = { .ptr.native = __argv };
- 	struct user_arg_ptr envp = { .ptr.native = __envp };
-+#ifdef CONFIG_KSU
-+	ksu_handle_execveat((int *)AT_FDCWD, &filename, &argv, &envp, 0);
-+#endif
- 	return do_execveat_common(AT_FDCWD, filename, argv, envp, 0);
- }
- 
-@@ -1961,6 +1970,9 @@ static int compat_do_execve(struct filename *filename,
- 		.is_compat = true,
- 		.ptr.compat = __envp,
- 	};
-+#ifdef CONFIG_KSU // 32-bit ksud and 32-on-64 support
-+	ksu_handle_execveat((int *)AT_FDCWD, &filename, &argv, &envp, 0);
-+#endif
- 	return do_execveat_common(AT_FDCWD, filename, argv, envp, 0);
- }
- 
-diff --git a/fs/internal.h b/fs/internal.h
-index 1c27dfa4a496..e953b89a7021 100644
---- a/fs/internal.h
-+++ b/fs/internal.h
-@@ -96,6 +96,7 @@ extern int finish_automount(struct vfsmount *, struct path *);
- extern int sb_prepare_remount_readonly(struct super_block *);
- 
- extern void __init mnt_init(void);
-+int path_umount(struct path *path, int flags);
- 
- extern int __mnt_want_write_file(struct file *);
- extern void __mnt_drop_write_file(struct file *);
 diff --git a/fs/namei.c b/fs/namei.c
-index 86a4364b1c3e..1c2475fc5507 100644
+index 86a4364b1..1c2475fc5 100644
 --- a/fs/namei.c
 +++ b/fs/namei.c
 @@ -40,6 +40,9 @@
@@ -384,7 +336,7 @@ index 86a4364b1c3e..1c2475fc5507 100644
  	return filp;
  }
 diff --git a/fs/namespace.c b/fs/namespace.c
-index ef4ed67cc957..0502d3edcf11 100644
+index 3fea74683..0502d3edc 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
 @@ -28,10 +28,37 @@
@@ -658,44 +610,7 @@ index ef4ed67cc957..0502d3edcf11 100644
  		 * non-NULL, then there's a reference that won't
  		 * be dropped until after an RCU delay done after
  		 * turning ->mnt_ns NULL.  So if we observe it
-@@ -1822,6 +2002,36 @@ SYSCALL_DEFINE1(oldumount, char __user *, name)
- 
- #endif
- 
-+static int can_umount(const struct path *path, int flags)
-+ {
-+	 struct mount *mnt = real_mount(path->mnt);
-+	 if (flags & ~(MNT_FORCE | MNT_DETACH | MNT_EXPIRE | UMOUNT_NOFOLLOW))
-+		 return -EINVAL;
-+	 if (!may_mount())
-+		 return -EPERM;
-+	 if (path->dentry != path->mnt->mnt_root)
-+		 return -EINVAL;
-+	 if (!check_mnt(mnt))
-+		 return -EINVAL;
-+	 if (mnt->mnt.mnt_flags & MNT_LOCKED)
-+		 return -EINVAL;
-+	 if (flags & MNT_FORCE && !capable(CAP_SYS_ADMIN))
-+		 return -EPERM;
-+	 return 0;
-+ }
-+
-+int path_umount(struct path *path, int flags)
-+ {
-+	 struct mount *mnt = real_mount(path->mnt);
-+	 int ret;
-+	 ret = can_umount(path, flags);
-+	 if (!ret)
-+		 ret = do_umount(mnt, flags);
-+	 dput(path->dentry);
-+	 mntput_no_expire(mnt);
-+	 return ret;
-+ }
-+
- static bool is_mnt_ns_file(struct dentry *dentry)
- {
- 	/* Is this a proxy for a mount namespace? */
-@@ -2361,6 +2571,27 @@ static int do_loopback(struct path *path, const char *old_name,
+@@ -2391,6 +2571,27 @@ static int do_loopback(struct path *path, const char *old_name,
  		umount_tree(mnt, UMOUNT_SYNC);
  		unlock_mount_hash();
  	}
@@ -723,7 +638,7 @@ index ef4ed67cc957..0502d3edcf11 100644
  out2:
  	unlock_mount(mp);
  out:
-@@ -3019,6 +3250,15 @@ long do_mount(const char *dev_name, const char __user *dir_name,
+@@ -3049,6 +3250,15 @@ long do_mount(const char *dev_name, const char __user *dir_name,
  	else
  		retval = do_new_mount(&path, type_page, sb_flags, mnt_flags,
  				      dev_name, data_page);
@@ -739,7 +654,7 @@ index ef4ed67cc957..0502d3edcf11 100644
  dput_out:
  	path_put(&path);
  	return retval;
-@@ -3096,6 +3336,10 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
+@@ -3126,6 +3336,10 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
  	struct mount *old;
  	struct mount *new;
  	int copy_flags;
@@ -750,7 +665,7 @@ index ef4ed67cc957..0502d3edcf11 100644
  
  	BUG_ON(!ns);
  
-@@ -3115,6 +3359,15 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
+@@ -3145,6 +3359,15 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
  	copy_flags = CL_COPY_UNBINDABLE | CL_EXPIRE;
  	if (user_ns != ns->user_ns)
  		copy_flags |= CL_SHARED_TO_SLAVE | CL_UNPRIVILEGED;
@@ -766,7 +681,7 @@ index ef4ed67cc957..0502d3edcf11 100644
  	new = copy_tree(old, old->mnt.mnt_root, copy_flags);
  	if (IS_ERR(new)) {
  		namespace_unlock();
-@@ -3151,6 +3404,29 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
+@@ -3181,6 +3404,29 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
  		while (p->mnt.mnt_root != q->mnt.mnt_root)
  			p = next_mnt(p, old);
  	}
@@ -796,7 +711,7 @@ index ef4ed67cc957..0502d3edcf11 100644
  	namespace_unlock();
  
  	if (rootmnt)
-@@ -3692,3 +3968,37 @@ const struct proc_ns_operations mntns_operations = {
+@@ -3722,3 +3968,37 @@ const struct proc_ns_operations mntns_operations = {
  	.install	= mntns_install,
  	.owner		= mntns_owner,
  };
@@ -835,7 +750,7 @@ index ef4ed67cc957..0502d3edcf11 100644
 +}
 +#endif
 diff --git a/fs/notify/fdinfo.c b/fs/notify/fdinfo.c
-index 74aeabbf0ea4..d6a1eab90e37 100644
+index 74aeabbf0..d6a1eab90 100644
 --- a/fs/notify/fdinfo.c
 +++ b/fs/notify/fdinfo.c
 @@ -13,6 +13,9 @@
@@ -925,30 +840,8 @@ index 74aeabbf0ea4..d6a1eab90e37 100644
  		seq_printf(m, "inotify wd:%x ino:%lx sdev:%x mask:%x ignored_mask:0 ",
  			   inode_mark->wd, inode->i_ino, inode->i_sb->s_dev,
  			   inotify_mark_user_mask(mark));
-diff --git a/fs/open.c b/fs/open.c
-index ad3400989712..5e543f2f5601 100644
---- a/fs/open.c
-+++ b/fs/open.c
-@@ -444,8 +444,17 @@ long do_faccessat(int dfd, const char __user *filename, int mode)
- 	return res;
- }
- 
-+#ifdef CONFIG_KSU
-+__attribute__((hot))
-+extern int ksu_handle_faccessat(int *dfd, const char __user **filename_user,
-+				int *mode, int *flags);
-+#endif
-+
- SYSCALL_DEFINE3(faccessat, int, dfd, const char __user *, filename, int, mode)
- {
-+#ifdef CONFIG_KSU
-+	ksu_handle_faccessat(&dfd, &filename, &mode, NULL);
-+#endif
- 	return do_faccessat(dfd, filename, mode);
- }
- 
 diff --git a/fs/overlayfs/inode.c b/fs/overlayfs/inode.c
-index 7f3787a6b445..47f0a148857b 100644
+index 7f3787a6b..47f0a1488 100644
 --- a/fs/overlayfs/inode.c
 +++ b/fs/overlayfs/inode.c
 @@ -156,6 +156,15 @@ int ovl_getattr(const struct path *path, struct kstat *stat,
@@ -968,7 +861,7 @@ index 7f3787a6b445..47f0a148857b 100644
  	old_cred = ovl_override_creds(dentry->d_sb);
  	err = vfs_getattr(&realpath, stat, request_mask, flags);
 diff --git a/fs/overlayfs/readdir.c b/fs/overlayfs/readdir.c
-index 47710c1a8d4f..a441cfbf2402 100644
+index 47710c1a8..a441cfbf2 100644
 --- a/fs/overlayfs/readdir.c
 +++ b/fs/overlayfs/readdir.c
 @@ -895,7 +895,19 @@ static int ovl_dir_open(struct inode *inode, struct file *file)
@@ -992,7 +885,7 @@ index 47710c1a8d4f..a441cfbf2402 100644
  	if (IS_ERR(realfile)) {
  		kfree(od);
 diff --git a/fs/overlayfs/super.c b/fs/overlayfs/super.c
-index 5ce71f60deb9..a54eae953b71 100644
+index 5ce71f60d..a54eae953 100644
 --- a/fs/overlayfs/super.c
 +++ b/fs/overlayfs/super.c
 @@ -307,6 +307,18 @@ static int ovl_statfs(struct dentry *dentry, struct kstatfs *buf)
@@ -1015,7 +908,7 @@ index 5ce71f60deb9..a54eae953b71 100644
  
  	err = vfs_statfs(&path, buf);
 diff --git a/fs/proc/cmdline.c b/fs/proc/cmdline.c
-index fa762c5fbcb2..c981cd698fce 100644
+index fa762c5fb..c981cd698 100644
 --- a/fs/proc/cmdline.c
 +++ b/fs/proc/cmdline.c
 @@ -4,8 +4,18 @@
@@ -1038,7 +931,7 @@ index fa762c5fbcb2..c981cd698fce 100644
  	seq_putc(m, '\n');
  	return 0;
 diff --git a/fs/proc/fd.c b/fs/proc/fd.c
-index 253e503970cd..3df71ff14d7f 100644
+index 253e50397..3df71ff14 100644
 --- a/fs/proc/fd.c
 +++ b/fs/proc/fd.c
 @@ -12,6 +12,9 @@
@@ -1083,7 +976,7 @@ index 253e503970cd..3df71ff14d7f 100644
  	show_fd_locks(m, file, files);
  	if (seq_has_overflowed(m))
 diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
-index 98c3d7c43377..2a38f8f8a0bc 100644
+index 98c3d7c43..2a38f8f8a 100644
 --- a/fs/proc/task_mmu.c
 +++ b/fs/proc/task_mmu.c
 @@ -20,6 +20,9 @@
@@ -1126,7 +1019,7 @@ index 98c3d7c43377..2a38f8f8a0bc 100644
  	}
  
 diff --git a/fs/proc_namespace.c b/fs/proc_namespace.c
-index 273ee82d8aa9..86bd6d140962 100644
+index 273ee82d8..86bd6d140 100644
 --- a/fs/proc_namespace.c
 +++ b/fs/proc_namespace.c
 @@ -12,6 +12,9 @@
@@ -1175,31 +1068,8 @@ index 273ee82d8aa9..86bd6d140962 100644
  	/* device */
  	if (sb->s_op->show_devname) {
  		seq_puts(m, "device ");
-diff --git a/fs/read_write.c b/fs/read_write.c
-index c6da3ed4f642..f4c6b75296c5 100644
---- a/fs/read_write.c
-+++ b/fs/read_write.c
-@@ -594,8 +594,18 @@ ssize_t ksys_read(unsigned int fd, char __user *buf, size_t count)
- 	return ret;
- }
- 
-+#ifdef CONFIG_KSU
-+extern bool ksu_vfs_read_hook __read_mostly;
-+extern __attribute__((cold)) int ksu_handle_sys_read(unsigned int fd,
-+				char __user **buf_ptr, size_t *count_ptr);
-+#endif
-+
- SYSCALL_DEFINE3(read, unsigned int, fd, char __user *, buf, size_t, count)
- {
-+#ifdef CONFIG_KSU
-+	if (unlikely(ksu_vfs_read_hook))
-+		ksu_handle_sys_read(fd, &buf, &count);
-+#endif
- 	return ksys_read(fd, buf, count);
- }
- 
 diff --git a/fs/readdir.c b/fs/readdir.c
-index 3c5ce8a0ddc9..dd82d352cb17 100644
+index 3c5ce8a0d..dd82d352c 100644
 --- a/fs/readdir.c
 +++ b/fs/readdir.c
 @@ -20,9 +20,15 @@
@@ -1267,7 +1137,7 @@ index 3c5ce8a0ddc9..dd82d352cb17 100644
  	if (sizeof(d_ino) < sizeof(ino) && d_ino != ino) {
  		buf->error = -EOVERFLOW;
 diff --git a/fs/stat.c b/fs/stat.c
-index 376543199b5a..85f8065fd1e3 100644
+index bf1239583..4b1e67db4 100644
 --- a/fs/stat.c
 +++ b/fs/stat.c
 @@ -17,10 +17,17 @@
@@ -1306,31 +1176,8 @@ index 376543199b5a..85f8065fd1e3 100644
  	stat->dev = inode->i_sb->s_dev;
  	stat->ino = inode->i_ino;
  	stat->mode = inode->i_mode;
-@@ -353,13 +371,21 @@ SYSCALL_DEFINE2(newlstat, const char __user *, filename,
- 	return cp_new_stat(&stat, statbuf);
- }
- 
-+#ifdef CONFIG_KSU
-+__attribute__((hot))
-+extern int ksu_handle_stat(int *dfd, const char __user **filename_user,
-+				int *flags);
-+#endif
-+
- #if !defined(__ARCH_WANT_STAT64) || defined(__ARCH_WANT_SYS_NEWFSTATAT)
- SYSCALL_DEFINE4(newfstatat, int, dfd, const char __user *, filename,
- 		struct stat __user *, statbuf, int, flag)
- {
- 	struct kstat stat;
- 	int error;
--
-+#ifdef CONFIG_KSU
-+	ksu_handle_stat(&dfd, &filename, &flag);
-+#endif
- 	error = vfs_fstatat(dfd, filename, &stat, flag);
- 	if (error)
- 		return error;
 diff --git a/fs/statfs.c b/fs/statfs.c
-index 29786598c2b5..e65f977f6f91 100644
+index 29786598c..e65f977f6 100644
 --- a/fs/statfs.c
 +++ b/fs/statfs.c
 @@ -9,6 +9,10 @@
@@ -1418,7 +1265,7 @@ index 29786598c2b5..e65f977f6f91 100644
  	return err;
 diff --git a/fs/sus_su.c b/fs/sus_su.c
 new file mode 100644
-index 000000000000..d140468d0714
+index 000000000..d140468d0
 --- /dev/null
 +++ b/fs/sus_su.c
 @@ -0,0 +1,140 @@
@@ -1564,7 +1411,7 @@ index 000000000000..d140468d0714
 +}
 diff --git a/fs/susfs.c b/fs/susfs.c
 new file mode 100644
-index 000000000000..2d9576899da5
+index 000000000..2d9576899
 --- /dev/null
 +++ b/fs/susfs.c
 @@ -0,0 +1,916 @@
@@ -2485,7 +2332,7 @@ index 000000000000..2d9576899da5
 +//void __init susfs_exit(void)
 +
 diff --git a/include/linux/mount.h b/include/linux/mount.h
-index ca388cc44686..1b38bd0d6051 100644
+index ca388cc44..1b38bd0d6 100644
 --- a/include/linux/mount.h
 +++ b/include/linux/mount.h
 @@ -73,7 +73,14 @@ struct vfsmount {
@@ -2504,7 +2351,7 @@ index ca388cc44686..1b38bd0d6051 100644
  
  struct file; /* forward dec */
 diff --git a/include/linux/sched.h b/include/linux/sched.h
-index d6276ad6fab6..12e80ddd3b00 100644
+index d6276ad6f..12e80ddd3 100644
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
 @@ -1410,18 +1410,35 @@ struct task_struct {
@@ -2543,29 +2390,9 @@ index d6276ad6fab6..12e80ddd3b00 100644
  	randomized_struct_fields_end
  
  	/* CPU-specific state of this task: */
-diff --git a/include/linux/seccomp.h b/include/linux/seccomp.h
-index e5320f6c8654..e77f7b4f39ca 100644
---- a/include/linux/seccomp.h
-+++ b/include/linux/seccomp.h
-@@ -11,6 +11,7 @@
- #ifdef CONFIG_SECCOMP
- 
- #include <linux/thread_info.h>
-+#include <linux/atomic.h>
- #include <asm/seccomp.h>
- 
- struct seccomp_filter;
-@@ -27,6 +28,7 @@ struct seccomp_filter;
-  */
- struct seccomp {
- 	int mode;
-+	atomic_t filter_count;
- 	struct seccomp_filter *filter;
- };
- 
 diff --git a/include/linux/sus_su.h b/include/linux/sus_su.h
 new file mode 100644
-index 000000000000..98e8f3b357ac
+index 000000000..98e8f3b35
 --- /dev/null
 +++ b/include/linux/sus_su.h
 @@ -0,0 +1,9 @@
@@ -2580,7 +2407,7 @@ index 000000000000..98e8f3b357ac
 +#endif
 diff --git a/include/linux/susfs.h b/include/linux/susfs.h
 new file mode 100644
-index 000000000000..ef31283dbc41
+index 000000000..ef31283db
 --- /dev/null
 +++ b/include/linux/susfs.h
 @@ -0,0 +1,186 @@
@@ -2772,7 +2599,7 @@ index 000000000000..ef31283dbc41
 +#endif
 diff --git a/include/linux/susfs_def.h b/include/linux/susfs_def.h
 new file mode 100644
-index 000000000000..7442047d0aa9
+index 000000000..7442047d0
 --- /dev/null
 +++ b/include/linux/susfs_def.h
 @@ -0,0 +1,62 @@
@@ -2839,7 +2666,7 @@ index 000000000000..7442047d0aa9
 +
 +#endif // #ifndef KSU_SUSFS_DEF_H
 diff --git a/kernel/kallsyms.c b/kernel/kallsyms.c
-index c34294c1c286..cbcc30b13c98 100644
+index c34294c1c..cbcc30b13 100644
 --- a/kernel/kallsyms.c
 +++ b/kernel/kallsyms.c
 @@ -668,8 +668,18 @@ static int s_show(struct seq_file *m, void *p)
@@ -2861,34 +2688,8 @@ index c34294c1c286..cbcc30b13c98 100644
  	return 0;
  }
  
-diff --git a/kernel/reboot.c b/kernel/reboot.c
-index d0660c2454f7..a0c8e32d8752 100644
---- a/kernel/reboot.c
-+++ b/kernel/reboot.c
-@@ -313,6 +313,10 @@ DEFINE_MUTEX(system_transition_mutex);
-  *
-  * reboot doesn't sync: do that yourself before calling this.
-  */
-+#ifdef CONFIG_KSU
-+extern int ksu_handle_sys_reboot(int magic1, int magic2, unsigned int cmd, void __user **arg);
-+#endif
-+
- SYSCALL_DEFINE4(reboot, int, magic1, int, magic2, unsigned int, cmd,
- 		void __user *, arg)
- {
-@@ -320,6 +324,10 @@ SYSCALL_DEFINE4(reboot, int, magic1, int, magic2, unsigned int, cmd,
- 	char buffer[256];
- 	int ret = 0;
- 
-+#ifdef CONFIG_KSU
-+	ksu_handle_sys_reboot(magic1, magic2, cmd, &arg);
-+#endif
-+
- 	/* We only trust the superuser with rebooting the system. */
- 	if (!ns_capable(pid_ns->user_ns, CAP_SYS_BOOT))
- 		return -EPERM;
 diff --git a/kernel/sys.c b/kernel/sys.c
-index af80d044579a..8c70d3757a64 100644
+index af80d0445..0d856825c 100644
 --- a/kernel/sys.c
 +++ b/kernel/sys.c
 @@ -1254,12 +1254,18 @@ static int override_release(char __user *release, size_t len)
