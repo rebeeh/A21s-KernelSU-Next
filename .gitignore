@@ -80,3 +80,7 @@ env/
 *.diff
 !patches/*.patch
 !patches/*.diff
+
+# Miscellaneous
+*.bak
+temp/
