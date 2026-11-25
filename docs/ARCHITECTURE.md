@@ -90,8 +90,9 @@ Each hook is a `static inline` call inserted directly into the kernel source fil
 |---|---|---|---|
 | `do_execve` | `fs/exec.c` | Before process credentials commit | Intercepts `su` requests and swaps the process context to root (`ksu` domain). |
 | `faccessat` | `fs/open.c` | Before permission check | Intercepts `access("/system/bin/su")` checks from root-seeking apps and redirects to `/system/bin/sh`. |
-| `read` | `fs/read_write.c` | In `SYSCALL_DEFINE3(read)` | Intercepts file reads for safety checks and allowlist lookups. |
+| `read` | `fs/read_write.c` | In `SYSCALL_DEFINE3(read)` | Appends `KERNEL_SU_RC` to `init.rc` when `init` reads to EOF. |
 | `newfstatat` | `fs/stat.c` | In `SYSCALL_DEFINE4(newfstatat)` | Returns stat info for `/system/bin/su` when requested by authorized apps. |
+| `newfstat` | `fs/stat.c` | In `SYSCALL_DEFINE2(newfstat)` (`ksu_handle_newfstat_ret`) | Adjusts `st_size` of `init.rc` so Android `ReadFdToString` reads the appended `KERNEL_SU_RC` and triggers `ksud` on boot. |
 | `reboot` | `kernel/reboot.c` | In `SYSCALL_DEFINE4(reboot)` | Intercepts reboot supercall magics to install driver file descriptors. |
 
 > [!NOTE]

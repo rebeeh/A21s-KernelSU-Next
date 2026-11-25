@@ -126,16 +126,19 @@ ksu_handle_sys_read(fd, &buf, &count);
 
 ---
 
-#### Hook 4 — `fs/stat.c` (`SYSCALL_DEFINE4(newfstatat)`)
+#### Hook 4 — `fs/stat.c` (`SYSCALL_DEFINE4(newfstatat)` & `SYSCALL_DEFINE2(newfstat)`)
 
 ```c
-#ifdef CONFIG_KSU_MANUAL_HOOK
+#ifdef CONFIG_KSU
 extern int ksu_handle_stat(int *dfd, const char __user **filename_user, int *flags);
+extern void ksu_handle_newfstat_ret(unsigned int *fd, struct stat __user **statbuf_ptr);
 ksu_handle_stat(&dfd, &filename, &flag);
+// Inside SYSCALL_DEFINE2(newfstat):
+ksu_handle_newfstat_ret(&fd, &statbuf);
 #endif
 ```
 
-**Purpose:** Fakes inode existence of `/system/bin/su` for authorized apps, enabling root detection without an actual `su` binary on the filesystem.
+**Purpose:** `ksu_handle_stat` fakes inode existence of `/system/bin/su` for authorized apps, while `ksu_handle_newfstat_ret` adjusts `st_size` when `init` stats `init.rc` so `ReadFdToString` reads the appended `KERNEL_SU_RC` and launches `ksud` (`post-fs-data`, `services`, `boot-completed`) on boot.
 
 ---
 

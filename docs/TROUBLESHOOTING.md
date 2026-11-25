@@ -365,14 +365,15 @@ ksu.uapi=6
      keymaster_tee: Cannot open /mnt/vendor/efs/DAK/GAK_RSA.private, ret -932
      ```
    - When SELinux blocks DAK access or if the physical Knox warranty bit (`0x1`) is tripped without fallback, Keymaster returns error `-932`.
-   - **Resolution applied**: We inject the missing SELinux policy rules via `/data/adb/ksu/bin/ksud sepolicy patch`:
+   - **Resolution applied (built into kernel)**: These SELinux policy rules are embedded directly in `KernelSU-Next/kernel/selinux/rules.c` (`patches/0003-kernelsu-next-samsung-fixes.patch`) so they apply automatically at boot on all custom ROMs without manual `post-fs-data.d` scripts:
      ```text
      allow hal_keymaster_default prov_efs_file dir { search read open getattr }
      allow hal_keymaster_default prov_efs_file file { read open getattr }
      allow hal_keymaster_default efs_file dir { search read open getattr }
      allow hal_keymaster_default efs_file file { read open getattr }
      ```
-   - This immediately restores Keymaster access to the Samsung Device Attestation Keys and certificates, elevating Play Integrity from completely `UNEVALUATED` (3 Red X's) to:
+   - **Important Tricky Store note**: Installing Tricky Store with its default AOSP software keybox (`DeviceID="sw"`) causes Google Play Integrity to return `UNEVALUATED` (failing even `MEETS_BASIC_INTEGRITY`). Either provide a valid unrevoked OEM hardware `keybox.xml` (with `spoofProvider=0` in `custom.pif.prop`), or disable Tricky Store and use `PlayIntegrityFork` (`spoofProvider=1`) for `MEETS_BASIC_INTEGRITY`.
+   - With Keymaster DAK access restored, Play Integrity elevates from `UNEVALUATED` (3 Red X's) to:
      - `MEETS_BASIC_INTEGRITY`: **PASSED (Green Checkmark)**
      - `appRecognitionVerdict`: **`PLAY_RECOGNIZED`**
      - `appLicensingVerdict`: **`LICENSED`**
