@@ -66,10 +66,20 @@ if git apply --check "${PROJECT_ROOT}/patches/0002-kernelsu-manual-hooks-and-bac
     echo "[✓] Applied 0002-kernelsu-manual-hooks-and-backports.patch"
 fi
 
+if git apply --check "${PROJECT_ROOT}/patches/0004-susfs-v1.5.5-kernel-4.19.patch" 2>/dev/null; then
+    git apply "${PROJECT_ROOT}/patches/0004-susfs-v1.5.5-kernel-4.19.patch"
+    echo "[✓] Applied 0004-susfs-v1.5.5-kernel-4.19.patch"
+fi
+
 cd "${KERNEL_DIR}/KernelSU-Next"
 if git apply --check "${PROJECT_ROOT}/patches/0003-kernelsu-next-samsung-fixes.patch" 2>/dev/null; then
     git apply "${PROJECT_ROOT}/patches/0003-kernelsu-next-samsung-fixes.patch"
     echo "[✓] Applied 0003-kernelsu-next-samsung-fixes.patch"
+fi
+
+if git apply --check "${PROJECT_ROOT}/patches/0005-kernelsu-next-susfs-integration.patch" 2>/dev/null; then
+    git apply "${PROJECT_ROOT}/patches/0005-kernelsu-next-susfs-integration.patch"
+    echo "[✓] Applied 0005-kernelsu-next-susfs-integration.patch"
 fi
 
 echo "[✓] Environment is fully configured and ready for compilation!"

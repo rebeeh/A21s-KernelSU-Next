@@ -45,8 +45,10 @@ jobs:
           cd a21s-kernel
           git apply ../patches/0001-build-host-openssl-3-compat.patch
           git apply ../patches/0002-kernelsu-manual-hooks-and-backports.patch
+          git apply ../patches/0004-susfs-v1.5.5-kernel-4.19.patch
           cd KernelSU-Next
           git apply ../../patches/0003-kernelsu-next-samsung-fixes.patch
+          git apply ../../patches/0005-kernelsu-next-susfs-integration.patch
 
       - name: Configure Kernel
         run: |
