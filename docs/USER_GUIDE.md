@@ -43,6 +43,7 @@ Download the latest pre-compiled release files from the [GitHub Releases](https:
 | [`boot-ksu.tar`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/boot-ksu.tar) | Odin AP package — for Windows users | [Samsung Odin](https://odindownload.com) |
 | [`boot-ksu.img`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/boot-ksu.img) | Raw boot partition image — for Linux/Mac users | [`samloader`](https://github.com/topjohnwu/samloader-rs) / [`heimdall`](https://github.com/Benjamin-Dobell/Heimdall) |
 | [`boot.img`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/boot.img) | Standard boot partition image — for block flashing (`dd`) | Terminal / Root Shell |
+| [`susfs4ksu-v1.5.5.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/susfs4ksu-v1.5.5.zip) | Version-matched SUSFS `v1.5.5` userspace companion (`ksu_susfs_arm64`) | KernelSU-Next Manager → Modules |
 | [`KernelSU_Next_v3.4.2.apk`](https://github.com/KernelSU-Next/KernelSU-Next/releases/download/v3.4.2/KernelSU_Next_v3.4.2.apk) | Official KernelSU-Next root manager app | Android Package Installer / ADB |
 
 > [!TIP]

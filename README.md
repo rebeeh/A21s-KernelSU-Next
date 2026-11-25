@@ -135,6 +135,7 @@ Choose the method that matches your OS and tools:
 | **Linux** | [`samloader`](https://github.com/topjohnwu/samloader-rs) | [`out/boot-ksu.img`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/boot-ksu.img) |
 | **macOS / Linux** | [`heimdall`](https://github.com/Benjamin-Dobell/Heimdall) | [`out/boot-ksu.img`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/boot-ksu.img) |
 | **Raw Block** | `dd` / fastboot | [`out/boot.img`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/boot.img) |
+| **SUSFS Companion** | [KernelSU-Next Manager](https://github.com/KernelSU-Next/KernelSU-Next/releases/download/v3.4.2/KernelSU_Next_v3.4.2.apk) (Modules) | [`out/susfs4ksu-v1.5.5.zip`](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest/download/susfs4ksu-v1.5.5.zip) |
 
 **Quick reference commands:**
 
