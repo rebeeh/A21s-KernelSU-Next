@@ -87,6 +87,7 @@ if [ -n "${STOCK_BOOT}" ] && [ -f "${STOCK_BOOT}" ]; then
     cd "${OUT_DIR}"
     cp -f boot-ksu.img boot.img
     tar -cvf "${OUT_DIR}/boot-ksu.tar" boot.img
+    rm -f boot.img
     echo "[✓] Created: ${OUT_DIR}/boot-ksu.tar"
 
     # Step 4: Package AnyKernel3 Zip

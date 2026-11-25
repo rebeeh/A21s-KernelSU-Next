@@ -106,6 +106,23 @@ def cmd_doctor():
     print("=" * 60)
 
 
+def _ensure_ak3_base() -> Path:
+    """Locate or clone upstream osm0sis/AnyKernel3 runtime files under build/anykernel3."""
+    candidates = [
+        PROJECT_ROOT / "build" / "anykernel3",
+        PROJECT_ROOT / "anykernel3",
+    ]
+    for c in candidates:
+        if (c / "META-INF" / "com" / "google" / "android" / "update-binary").is_file():
+            return c
+
+    ak3_base = PROJECT_ROOT / "build" / "anykernel3"
+    ak3_base.parent.mkdir(parents=True, exist_ok=True)
+    log(f"Cloning osm0sis/AnyKernel3 base runtime into {ak3_base}...")
+    run_cmd(["git", "clone", "--depth=1", "https://github.com/osm0sis/AnyKernel3.git", str(ak3_base)])
+    return ak3_base
+
+
 def cmd_package(image_path: str = None):
     """Packages AnyKernel3 recovery zip using native Python zipfile."""
     OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -133,30 +150,49 @@ def cmd_package(image_path: str = None):
         err("Compiled kernel 'Image' not found! Build the kernel first or pass --image <path>.")
         sys.exit(1)
 
+    ak3_base = _ensure_ak3_base()
     zip_name = "KernelSU-Next-A21s-universal850-AnyKernel3.zip"
     zip_path = OUT_DIR / zip_name
 
     log(f"Staging kernel Image from: {kernel_image}")
     log(f"Building platform-independent AnyKernel3 zip: {zip_path}")
 
+    base_keep_dirs = ("META-INF", "tools", "modules", "ramdisk", "patch")
+    exec_names = {"update-binary", "magiskboot", "magiskpolicy", "busybox", "anykernel.sh"}
+
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
-        # 1. Add all AnyKernel3 template files
-        for root, dirs, files in os.walk(AK3_DIR):
+        # 1. Add upstream AnyKernel3 runtime files (META-INF, tools, etc.)
+        for sub in base_keep_dirs:
+            sub_dir = ak3_base / sub
+            if not sub_dir.is_dir():
+                continue
+            for root, _, files in os.walk(sub_dir):
+                for file in files:
+                    if file.startswith(".git") or file == "placeholder":
+                        continue
+                    file_full = Path(root) / file
+                    rel_path = file_full.relative_to(ak3_base)
+                    zinfo = zipfile.ZipInfo.from_file(file_full, arcname=str(rel_path))
+                    if file in exec_names or file.endswith((".sh", ".bin")) or os.access(file_full, os.X_OK):
+                        zinfo.external_attr = 0o755 << 16
+                    zf.writestr(zinfo, file_full.read_bytes(), compress_type=zipfile.ZIP_DEFLATED)
+
+        # 2. Overlay our A21s anykernel.sh configuration
+        for root, _, files in os.walk(AK3_DIR):
             for file in files:
                 if file.startswith(".git") or file == "README.md":
                     continue
                 file_full = Path(root) / file
                 rel_path = file_full.relative_to(AK3_DIR)
-                # Preserve executable permissions in zip
                 zinfo = zipfile.ZipInfo.from_file(file_full, arcname=str(rel_path))
-                if file.endswith((".sh", "magiskpolicy", "magiskboot")):
+                if file.endswith(".sh") or file in exec_names:
                     zinfo.external_attr = 0o755 << 16
-                zf.writestr(zinfo, file_full.read_bytes())
+                zf.writestr(zinfo, file_full.read_bytes(), compress_type=zipfile.ZIP_DEFLATED)
 
-        # 2. Add the compiled kernel Image
+        # 3. Add the compiled kernel Image
         zinfo = zipfile.ZipInfo.from_file(kernel_image, arcname="Image")
         zinfo.external_attr = 0o644 << 16
-        zf.writestr(zinfo, kernel_image.read_bytes())
+        zf.writestr(zinfo, kernel_image.read_bytes(), compress_type=zipfile.ZIP_DEFLATED)
 
     size_mb = zip_path.stat().st_size / (1024 * 1024)
     log(f"Successfully generated: {zip_path.name} ({size_mb:.2f} MiB)")

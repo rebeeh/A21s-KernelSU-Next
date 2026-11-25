@@ -4,9 +4,10 @@
 # Runs identically on Linux, macOS (Intel & Apple Silicon), and Windows.
 # ==============================================================================
 
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV WORK_DIR="/workspace"
 ENV ARCH=arm64
 ENV LLVM=1
 ENV LLVM_IAS=1
@@ -46,10 +47,11 @@ RUN git clone --depth=1 https://github.com/LineageOS/android_prebuilts_clang_ker
 
 ENV PATH="/workspace/toolchain/clang-r416183b/bin:${PATH}"
 
-# 3. Download standalone magiskboot
+# 3. Download standalone magiskboot & AnyKernel3 template
 RUN mkdir -p /workspace/tools && \
     curl -sL "https://github.com/magiskboot-x86_64/magiskboot/releases/latest/download/magiskboot" -o /workspace/tools/magiskboot && \
-    chmod +x /workspace/tools/magiskboot
+    chmod +x /workspace/tools/magiskboot && \
+    git clone --depth=1 https://github.com/osm0sis/AnyKernel3.git /workspace/anykernel3
 
 # 4. Clone LineageOS 24 kernel tree & KernelSU-Next
 RUN git clone -b lineage-24.0 --depth=1 https://github.com/samsungexynos850/android_kernel_samsung_exynos850.git /workspace/a21s-kernel && \
@@ -57,17 +59,18 @@ RUN git clone -b lineage-24.0 --depth=1 https://github.com/samsungexynos850/andr
     git clone -b legacy --depth=1 https://github.com/KernelSU-Next/KernelSU-Next.git KernelSU-Next && \
     ln -sf ../KernelSU-Next/kernel drivers/kernelsu
 
-# 5. Copy patches and defconfig from repository context
+# 5. Copy patches, defconfig, scripts, and AnyKernel3 overlay
 COPY patches/ /workspace/patches/
 COPY configs/ /workspace/configs/
 COPY tools/anykernel3/ /workspace/tools/anykernel3/
 COPY scripts/ /workspace/scripts/
 COPY build.py /workspace/build.py
 
-# 6. Apply patches and install defconfig
+# 6. Apply all kernel + SUSFS + KernelSU-Next patches and install defconfig
 RUN cd /workspace/a21s-kernel && \
     git apply /workspace/patches/0001-build-host-openssl-3-compat.patch && \
     git apply /workspace/patches/0002-kernelsu-manual-hooks-and-backports.patch && \
+    git apply /workspace/patches/0004-susfs-v1.5.5-kernel-4.19.patch && \
     cd KernelSU-Next && \
     git apply /workspace/patches/0003-kernelsu-next-samsung-fixes.patch && \
     cp /workspace/configs/a21s_ksu_defconfig /workspace/a21s-kernel/.config

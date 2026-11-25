@@ -56,12 +56,13 @@ flowchart TD
 Run the entire compilation pipeline on GitHub's cloud runners without downloading gigabytes of kernel source or Clang locally:
 
 1. Open [GitHub Actions → Build Kernel](https://github.com/rebeeh/A21s-KernelSU-Next/actions/workflows/build-kernel.yml) (defined in [`.github/workflows/build-kernel.yml`](../.github/workflows/build-kernel.yml)).
-2. Click **Run workflow** on `main`.
+2. Click **Run workflow** on `main` *(optionally supply `stock_boot_url` to also repack `boot-ksu.img` and `boot-ksu.tar`)*.
 3. The workflow automatically:
-   - Clones `clang-r416183b`, `android_kernel_samsung_exynos850` (`lineage-24.0`), and `KernelSU-Next` (`legacy`) on `ubuntu-24.04`.
+   - Clones `clang-r416183b`, `android_kernel_samsung_exynos850` (`lineage-24.0`), `KernelSU-Next` (`legacy`), and [`osm0sis/AnyKernel3`](https://github.com/osm0sis/AnyKernel3) on `ubuntu-24.04`.
    - Applies [`0001`](../patches/0001-build-host-openssl-3-compat.patch) through [`0004`](../patches/0004-susfs-v1.5.5-kernel-4.19.patch).
-   - Builds `Image` using [`configs/a21s_ksu_defconfig`](../configs/a21s_ksu_defconfig) and packages `boot-ksu.img`, `boot-ksu.tar`, and `KernelSU-Next-A21s-universal850-AnyKernel3.zip`.
-4. Download the artifacts from the workflow summary (or check [GitHub Releases (`latest`)](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest)).
+   - Builds `Image` using [`configs/a21s_ksu_defconfig`](../configs/a21s_ksu_defconfig) and packages `KernelSU-Next-A21s-universal850-AnyKernel3.zip`.
+   - Clones [`simonpunk/susfs4ksu`](https://gitlab.com/simonpunk/susfs4ksu/-/tree/kernel-4.19) (`kernel-4.19`), compiles `ksu_susfs_arm64` from C source via the runner's Android NDK (`./build_ksu_susfs_tool.sh`), and packages `susfs4ksu-v1.5.5.zip`.
+4. Download all artifacts (`AnyKernel3.zip`, `susfs4ksu-v1.5.5.zip`, `Image`, and optional `boot-ksu.img` / `boot-ksu.tar`) from the workflow summary — or from [GitHub Releases (`latest`)](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest) when pushed as a `v*` tag.
 
 ---
 

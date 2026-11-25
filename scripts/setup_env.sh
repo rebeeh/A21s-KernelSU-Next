@@ -26,13 +26,20 @@ else
     echo "[✓] Toolchain clang-r416183b found."
 fi
 
-# 3. magiskboot Setup
+# 3. magiskboot & AnyKernel3 Setup
 if [ ! -f "${TOOLS_DIR}/magiskboot" ]; then
     echo "[+] Setting up magiskboot..."
     curl -sL "https://github.com/magiskboot-x86_64/magiskboot/releases/latest/download/magiskboot" -o "${TOOLS_DIR}/magiskboot" 2>/dev/null || true
     chmod +x "${TOOLS_DIR}/magiskboot"
 else
     echo "[✓] magiskboot tool found."
+fi
+
+if [ ! -f "${WORK_DIR}/anykernel3/META-INF/com/google/android/update-binary" ]; then
+    echo "[+] Cloning osm0sis/AnyKernel3 base runtime..."
+    git clone --depth=1 https://github.com/osm0sis/AnyKernel3.git "${WORK_DIR}/anykernel3"
+else
+    echo "[✓] AnyKernel3 base runtime found."
 fi
 
 # 4. Kernel Source Setup

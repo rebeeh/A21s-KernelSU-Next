@@ -80,8 +80,8 @@ Choose any of four reproducible build methods (full details in [docs/BUILD.md](d
 ### Method A — Cloud Build (GitHub Actions, Zero Local Setup)
 
 1. Open [GitHub Actions → Build Kernel](https://github.com/rebeeh/A21s-KernelSU-Next/actions/workflows/build-kernel.yml) ([`.github/workflows/build-kernel.yml`](.github/workflows/build-kernel.yml)).
-2. Click **Run workflow** on `main`.
-3. Download the compiled `AnyKernel3` `.zip`, `boot-ksu.img`, and `boot-ksu.tar` artifacts from the workflow run or [Releases](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest).
+2. Click **Run workflow** on `main` *(optionally pass `stock_boot_url` to repack `boot-ksu.img` & `boot-ksu.tar`)*.
+3. CI automatically builds `Image` + `KernelSU-Next-A21s-universal850-AnyKernel3.zip` and compiles `ksu_susfs_arm64` from source via Android NDK into `susfs4ksu-v1.5.5.zip`. Download everything from workflow artifacts (or [Releases](https://github.com/rebeeh/A21s-KernelSU-Next/releases/latest) on tag pushes).
 
 ### Method B — Docker / Compose (Windows / macOS / Linux)
 

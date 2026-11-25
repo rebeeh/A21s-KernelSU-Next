@@ -87,7 +87,7 @@ This repository includes a CI/CD workflow at [`.github/workflows/build-kernel.ym
 
 1. Open [GitHub Actions → Build Kernel](https://github.com/rebeeh/A21s-KernelSU-Next/actions/workflows/build-kernel.yml).
 2. Trigger **Run workflow** manually at any time — no local toolchain required.
-3. The runner builds on `ubuntu-24.04`, applies [`patches/`](../patches/) (`0001`–`0004`), and packages `boot-ksu.img`, `boot-ksu.tar`, and `AnyKernel3.zip` for download.
+3. The runner builds on `ubuntu-24.04`, applies [`patches/`](../patches/) (`0001`–`0004`), packages `AnyKernel3.zip` (plus optional `boot-ksu.img` / `boot-ksu.tar`), compiles `ksu_susfs_arm64` from source via Android NDK into `susfs4ksu-v1.5.5.zip`, and attaches all assets automatically on `v*` tag pushes.
 
 ---
 
