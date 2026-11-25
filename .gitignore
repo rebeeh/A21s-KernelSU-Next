@@ -83,4 +83,6 @@ env/
 
 # Miscellaneous
 *.bak
+*.apk
+keybox.xml
 temp/
