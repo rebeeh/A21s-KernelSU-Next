@@ -205,7 +205,10 @@ flowchart TD
 3. **HMA-OSS (Hide My Applist)**: Pre-configured via `HMA-OSS_config.json` to hide root managers, Vector, and framework packages.
    - Profile permissions can be set in KernelSU Manager or with `ksud profile set`.
 4. **Zygisk-Detach**: Detaches target applications from Google Play Store update checks to prevent unintended background upgrades.
-5. **Hardware Attestation (Keybox)**: `MEETS_STRONG_INTEGRITY` requires an unrevoked private OEM `keybox.xml`. Public keyboxes are revoked by Google within days.
+5. **Play Integrity (`AlwaysStrong` — All-in-One)**:
+   - Use **[AlwaysStrong](https://gitlab.com/Evokerr/AlwaysStrong/-/releases)** (`AlwaysStrong-v1.0.6.1.zip`) as the single all-in-one Play Integrity module (bundles TEE simulation, fingerprint spoofing, and WebUI management).
+   - **Do not install redundant integrity modules** (`PlayIntegrityFix` / `PlayIntegrityFork`, `Tricky Store`, `Yurikey`) alongside AlwaysStrong, as they conflict with each other.
+   - Note: `MEETS_STRONG_INTEGRITY` still requires an unrevoked OEM `keybox.xml`; without one, AlwaysStrong/PIF provides `MEETS_BASIC_INTEGRITY`.
 
 ---
 

@@ -372,7 +372,7 @@ ksu.uapi=6
      allow hal_keymaster_default efs_file dir { search read open getattr }
      allow hal_keymaster_default efs_file file { read open getattr }
      ```
-   - **Important Tricky Store note**: Installing Tricky Store with its default AOSP software keybox (`DeviceID="sw"`) causes Google Play Integrity to return `UNEVALUATED` (failing even `MEETS_BASIC_INTEGRITY`). Either provide a valid unrevoked OEM hardware `keybox.xml` (with `spoofProvider=0` in `custom.pif.prop`), or disable Tricky Store and use `PlayIntegrityFork` (`spoofProvider=1`) for `MEETS_BASIC_INTEGRITY`.
+   - **Recommended Module Setup (No Redundant Modules)**: Use **[AlwaysStrong](https://gitlab.com/Evokerr/AlwaysStrong/-/releases)** (`AlwaysStrong-v1.0.6.1.zip`) as a single all-in-one Play Integrity module instead of stacking separate `PlayIntegrityFork` + `Tricky Store` + `Yurikey` modules (which duplicate hooks and can conflict). If using standalone Tricky Store instead, never leave its default `DeviceID="sw"` keybox or a revoked public keybox active, as that forces `UNEVALUATED`.
    - With Keymaster DAK access restored, Play Integrity elevates from `UNEVALUATED` (3 Red X's) to:
      - `MEETS_BASIC_INTEGRITY`: **PASSED (Green Checkmark)**
      - `appRecognitionVerdict`: **`PLAY_RECOGNIZED`**
