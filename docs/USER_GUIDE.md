@@ -197,18 +197,28 @@ flowchart TD
 
 ### Module Stack Verification Checklist
 
-1. **ReZygisk**: Provides the Zygisk API foundation via ptrace tracer injection.
+1. **[ReZygisk](https://github.com/PerformanC/ReZygisk)**: Provides the Zygisk API foundation via ptrace tracer injection.
    - Verify: `adb shell cat /data/adb/modules/rezygisk/module.prop` shows `[Monitor: ✅, ReZygisk 64-bit: ✅, ReZygisk 32-bit: ✅]`.
    - *Note on Manager badge:* KernelSU Manager displays an informational `ZYGISK REQUIRED` chip because ReZygisk injects into zygote without modifying the Manager process environment. This does **not** affect functionality.
-2. **Vector (Modern Xposed Framework)**: Replaces legacy LSPosed with clean in-memory hooking.
+2. **[Vector](https://github.com/JingMatrix/Vector) (Modern Xposed Framework)**: Replaces legacy LSPosed with clean in-memory hooking.
    - Manager APK can be installed via ADB (`org.matrix.vector.manager`).
-3. **HMA-OSS (Hide My Applist)**: Pre-configured via `HMA-OSS_config.json` to hide root managers, Vector, and framework packages.
+3. **[HMA-OSS](https://github.com/frknkrc44/HMA-OSS) (Hide My Applist)**: Pre-configured via `HMA-OSS_config.json` to hide root managers, Vector, and framework packages.
    - Profile permissions can be set in KernelSU Manager or with `ksud profile set`.
-4. **Zygisk-Detach**: Detaches target applications from Google Play Store update checks to prevent unintended background upgrades.
-5. **Play Integrity (`AlwaysStrong` — All-in-One)**:
-   - Use **[AlwaysStrong](https://gitlab.com/Evokerr/AlwaysStrong/-/releases)** (`AlwaysStrong-v1.0.6.1.zip`) as the single all-in-one Play Integrity module (bundles TEE simulation, fingerprint spoofing, and WebUI management).
-   - **Do not install redundant integrity modules** (`PlayIntegrityFix` / `PlayIntegrityFork`, `Tricky Store`, `Yurikey`) alongside AlwaysStrong, as they conflict with each other.
-   - Note: `MEETS_STRONG_INTEGRITY` still requires an unrevoked OEM `keybox.xml`; without one, AlwaysStrong/PIF provides `MEETS_BASIC_INTEGRITY`.
+4. **[zygisk-detach](https://github.com/j-hc/zygisk-detach)**: Detaches target applications from Google Play Store update checks to prevent unintended background upgrades.
+5. **Play Integrity ([AlwaysStrong](https://gitlab.com/Evokerr/AlwaysStrong/-/releases) — All-in-One)**:
+   - Use **[AlwaysStrong](https://gitlab.com/Evokerr/AlwaysStrong/-/releases)** (`AlwaysStrong-v1.0.6.1.zip`) as the single all-in-one Play Integrity module (bundles `TEESimulator`, `autopif4`, keybox fetching, and WebUI management).
+   - **Do not install redundant integrity modules** (`PlayIntegrityFix` / `PlayIntegrityFork`, standalone `Tricky Store`, `Yurikey`) alongside AlwaysStrong, as they duplicate hooks and conflict.
+   - Note: `MEETS_STRONG_INTEGRITY` passes out of the box when AlwaysStrong fetches an active keybox, or you can import a personal private OEM `keybox.xml` via its WebUI.
+
+### Verifying Stealth with Duck Detector
+
+You can use **Duck Detector** to audit kernel stealth, TEE alignment, and leftover root artifacts:
+
+- **Expected Clean:** `No suspicious kernel markers`, `Function hooks: Clean`, `Mappings: Clean`, `Loader visibility: Clean`, `Native Root` clean (with `prctl(0xDEADBEEF)` root-guarded and `/data/local/tmp/` free of `ksud`/temp binaries), and `TEE: Attestation aligned`.
+- **Expected Setup Signals:**
+  - `Dangerous Apps` / `Root Managers` → Clear by importing your `HMA-OSS_config.json` in [HMA-OSS](https://github.com/frknkrc44/HMA-OSS) and adding the audited app to your hide template.
+  - `ADB Runtime` → Clears when USB Debugging is turned off after setup.
+  - See [Troubleshooting — Blindspot 4](TROUBLESHOOTING.md#-blindspot-4-google-play-integrity-knox-tripping--hardware-attestation) for details on LineageOS `userdebug` props and Vector `xposed_data` SELinux context behavior.
 
 ---
 

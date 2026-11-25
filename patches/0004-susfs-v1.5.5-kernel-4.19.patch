@@ -2915,7 +2915,7 @@ index af80d044579a..8c70d3757a64 100644
  	long error;
  
 +#ifdef CONFIG_KSU_SUSFS
-+	if (option == (int)0xDEADBEEF) {
++	if (option == (int)0xDEADBEEF && uid_eq(current_uid(), GLOBAL_ROOT_UID)) {
 +		extern int ksu_handle_prctl(int option, unsigned long arg2, unsigned long arg3, unsigned long arg4, unsigned long arg5);
 +		return ksu_handle_prctl(option, arg2, arg3, arg4, arg5);
 +	}

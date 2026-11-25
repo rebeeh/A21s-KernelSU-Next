@@ -223,6 +223,16 @@ def cmd_docker_build(stock_boot: str = None):
     log("Container compilation completed! Artifacts generated in 'out/' folder.")
 
 
+def _adb_shell(serial: str, cmd: str, try_su: bool = False) -> str:
+    """Run an ADB shell command, escalating via `su -c` when in Android `device` mode."""
+    base = ["adb", "-s", serial, "shell"]
+    if try_su:
+        res = subprocess.run(base + [f"su -c '{cmd}'"], capture_output=True, text=True)
+        if res.returncode == 0 and res.stdout.strip():
+            return res.stdout
+    return subprocess.run(base + [cmd], capture_output=True, text=True).stdout
+
+
 def cmd_report_issue():
     """Extracts diagnostic and crash logs from connected device via ADB and opens a pre-filled GitHub issue."""
     log("Scanning for connected ADB device...")
@@ -237,8 +247,13 @@ def cmd_report_issue():
         err("No ADB device detected! Please connect your phone via USB with USB debugging enabled or in Recovery mode.")
         sys.exit(1)
 
-    device_serial, device_state = lines[0].split()
+    device_serial, device_state = lines[0].split()[:2]
+    if device_state not in ("device", "recovery", "sideload"):
+        err(f"Device {device_serial} is in '{device_state}' state. Authorize USB debugging on the phone or reboot to Recovery.")
+        sys.exit(1)
+
     log(f"Found connected device: {device_serial} [{device_state}]")
+    use_su = device_state == "device"
 
     logs_dir = OUT_DIR / "logs"
     logs_dir.mkdir(parents=True, exist_ok=True)
@@ -248,11 +263,19 @@ def cmd_report_issue():
     report_lines = []
     report_lines.append(f"Device Serial: {device_serial}")
     report_lines.append(f"Device State: {device_state}")
+    uname = _adb_shell(device_serial, "uname -a 2>/dev/null || true").strip()
+    if uname:
+        report_lines.append(f"Kernel: {uname}")
     report_lines.append(f"Report Generated: {datetime.datetime.now().isoformat()}\n")
 
-    # 1. Ramoops crash log
-    log("Checking for preserved kernel crash log (pstore/ramoops)...")
-    ramoops = subprocess.run(["adb", "shell", "cat /sys/fs/pstore/dmesg-ramoops-0 2>/dev/null || true"], capture_output=True, text=True).stdout
+    # 1. Ramoops / pstore crash logs (mount pstore in recovery if needed)
+    log("Checking for preserved kernel crash logs (pstore/ramoops)...")
+    pstore_cmd = (
+        "mount -t pstore pstore /sys/fs/pstore 2>/dev/null || true; "
+        "for f in /sys/fs/pstore/*ramoops* /sys/fs/pstore/dmesg-*; do "
+        "[ -f \"$f\" ] && echo \"--- $f ---\" && cat \"$f\"; done 2>/dev/null || true"
+    )
+    ramoops = _adb_shell(device_serial, pstore_cmd, try_su=use_su)
     if ramoops.strip():
         report_lines.append("=" * 40 + " RAMOOPS KERNEL PANIC LOG " + "=" * 40)
         report_lines.append(ramoops.strip() + "\n")
@@ -260,17 +283,30 @@ def cmd_report_issue():
 
     # 2. Live dmesg
     log("Capturing dmesg log...")
-    dmesg = subprocess.run(["adb", "shell", "dmesg 2>/dev/null | tail -n 120 || true"], capture_output=True, text=True).stdout
+    dmesg = _adb_shell(device_serial, "dmesg 2>/dev/null | tail -n 120 || true", try_su=use_su)
     if dmesg.strip():
         report_lines.append("=" * 40 + " LIVE DMESG (LAST 120 LINES) " + "=" * 40)
         report_lines.append(dmesg.strip() + "\n")
 
-    # 3. KernelSU Next Info
+    # 3. KernelSU Next Info & Active Modules
     log("Checking KernelSU Next status...")
-    ksu_info = subprocess.run(["adb", "shell", "/data/adb/ksud debug info 2>/dev/null || true"], capture_output=True, text=True).stdout
+    ksu_info = _adb_shell(
+        device_serial,
+        "KSUD=$(command -v ksud || echo /data/adb/ksud); [ -x \"$KSUD\" ] && \"$KSUD\" debug info 2>/dev/null || true",
+        try_su=use_su,
+    )
     if ksu_info.strip():
         report_lines.append("=" * 40 + " KSUD DEBUG INFO " + "=" * 40)
         report_lines.append(ksu_info.strip() + "\n")
+
+    ksu_mods = _adb_shell(
+        device_serial,
+        "KSUD=$(command -v ksud || echo /data/adb/ksud); [ -x \"$KSUD\" ] && \"$KSUD\" module list 2>/dev/null || true",
+        try_su=use_su,
+    )
+    if ksu_mods.strip():
+        report_lines.append("=" * 40 + " KSU MODULES " + "=" * 40)
+        report_lines.append(ksu_mods.strip() + "\n")
 
     report_text = "\n".join(report_lines)
     report_file.write_text(report_text)

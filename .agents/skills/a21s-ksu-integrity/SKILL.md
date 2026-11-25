@@ -25,12 +25,8 @@ KernelSU-Next Manager displays `ZYGISK REQUIRED` when `ZYGISK_ENABLED` is absent
 - `adb shell "su -c 'cat /data/adb/rezygisk/state.json'"` (`state: 1` for `"64"` and `"32"`)
 - `adb shell "su -c '/data/adb/ksu/bin/ksud module list'"` (`[Monitor: ✅, ReZygisk 64-bit: ✅, ReZygisk 32-bit: ✅]`)
 
-## 4. Play Integrity Mode Switching (Tricky Store vs. PIF)
-- **Without an unrevoked OEM hardware `keybox.xml`** (avoid `DeviceID="sw"` or revoked public keyboxes, which cause `UNEVALUATED`):
-  1. Disable Tricky Store: `touch /data/adb/modules/tricky_store/disable`
-  2. Set `spoofProvider=1` in `/data/adb/modules/playintegrityfix/custom.pif.prop`
-  3. Restart `com.google.android.gms.unstable` and `com.android.vending` → restores `MEETS_BASIC_INTEGRITY`.
-- **With an unrevoked OEM hardware `keybox.xml`**:
-  1. Place keybox at `/data/adb/tricky_store/keybox.xml` (`chmod 600`)
-  2. Remove `/data/adb/modules/tricky_store/disable`
-  3. Set `spoofProvider=0` in `/data/adb/modules/playintegrityfix/custom.pif.prop` and reboot.
+## 4. Play Integrity (`AlwaysStrong` All-in-One)
+- Use **`AlwaysStrong`** (`Evokerr/AlwaysStrong` on GitLab) as the single all-in-one Play Integrity module (bundles `TEESimulator`, `autopif4`, and keybox fetching).
+- **Do not** stack redundant `PlayIntegrityFork`, standalone `Tricky Store`, or `Yurikey` modules alongside `AlwaysStrong`.
+- If using a personal private OEM `keybox.xml`, import it via AlwaysStrong's WebUI (`Set Custom Keybox`) or place it at `/data/adb/tricky_store/keybox.xml`.
+- Verify `prctl(0xDEADBEEF)` is guarded by `uid_eq(current_uid(), GLOBAL_ROOT_UID)` in `kernel/sys.c` (`patches/0004-susfs-v1.5.5-kernel-4.19.patch`) so non-root detectors like Duck Detector receive `-EINVAL` instead of `0`.
